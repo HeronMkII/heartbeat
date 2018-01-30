@@ -15,7 +15,7 @@ SRC = $(wildcard ./src/*.c)
 OBJ = $(SRC:./src/%.c=./build/%.o)
 DEP = $(OBJ:.o=.d)
 
-pay: $(OBJ)
+heartbeat: $(OBJ)
 	$(CC) $(CFLAGS) -o ./build/$@.elf $(OBJ) $(LIB)
 	avr-objcopy -j .text -j .data -O ihex ./build/$@.elf ./build/$@.hex
 
@@ -33,7 +33,7 @@ clean:
 	rm -f $(OBJ)
 	rm -f $(DEP)
 
-upload: pay
+upload: heartbeat
 	avrdude -c $(PROG) -p $(MCU) -P $(PORT) -U flash:w:./build/$^.hex
 
 debug:
