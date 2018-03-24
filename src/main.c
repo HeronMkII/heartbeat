@@ -44,8 +44,8 @@ mob_t tx_mob = {
 void tx_callback(uint8_t* data, uint8_t* len) {
   *len = 1;
   data[0] = eeprom_read_byte(&parent_counter);
-  print("Data[0]: %d\n",data[0]);
-  eeprom_update_byte(&parent_counter,data[0]+1);//parent_counter += 1;
+  //print("Data[0]: %d\n",data[0]);
+  eeprom_update_byte(&parent_counter,(parent_counter+1));//parent_counter += 1;
   print("Parent counter incremented\n");
 
   uint8_t parent_read = eeprom_read_byte(&parent_counter);//replaces old print statements
@@ -55,8 +55,8 @@ void tx_callback(uint8_t* data, uint8_t* len) {
 void rx_callback(uint8_t* data, uint8_t len) {
   print("TX received!\n");
   if (len != 0) {
-        print("Data[0]: %d\n",data[0]);
         eeprom_update_byte(&child_counter,data[0]);//child_counter = data[0];
+        //print("Data[0]: %d\n",data[0]);
 
         uint8_t child_read = eeprom_read_byte(&child_counter);//replaces old print statement
         print("child_counter: %d\n", child_read);
