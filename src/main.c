@@ -48,6 +48,32 @@ void rx_callback(uint8_t* data, uint8_t len) {
     if (len != 0) {
         child_counter = data[0];
         print("child_counter: %d\n", child_counter);
+
+
+        /**
+        Jason's code
+
+        Still waiting on Kamran's code
+        **/
+        //data incoming
+
+        if(mob_t tx_mob.mob_num == 1){
+          //update EEPROM
+          update(*data); //automatically compares to EEPROM, saves if different
+
+          //update FLASH
+          //compare data to flash
+          int stored_status;
+          read_field(1, stored_status); //read_flash
+
+          //if incoming data != stored status, save new data.
+          if(*data != stored_status){
+            write_to_flash(0x04, 1, *data);
+
+          }
+        }
+
+        //end of Jason's code
     } else {
         print("No data\n");
     }
