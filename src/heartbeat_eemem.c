@@ -7,7 +7,7 @@
 #define F_CPU 8
 #include <util/delay.h>
 
-#define EEMEM   __attribute__((section(".eeprom")));//added this
+#define EEMEM   __attribute__((section(".eeprom"))); //Note: this might not be needed
 
 void rx_callback(uint8_t*, uint8_t);
 void tx_callback(uint8_t*, uint8_t*);
