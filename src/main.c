@@ -1,19 +1,20 @@
 //This version includes the EEMEM Attribute
+//Contains identical code to heartbeat_eemem.c
 #include <uart/uart.h>
 #include <uart/log.h>
 #include <can/can.h>
-#include <avr/eeprom.h>//added this
+#include <avr/eeprom.h>
 
 #define F_CPU 8
 #include <util/delay.h>
 
-#define EEMEM   __attribute__((section(".eeprom")));//added this
+#define EEMEM   __attribute__((section(".eeprom")));
 
 void rx_callback(uint8_t*, uint8_t);
 void tx_callback(uint8_t*, uint8_t*);
 
-uint8_t EEMEM child_counter = 0; //modified to be stored in EEPROM
-uint8_t EEMEM parent_counter = 0; //modified to be stored in EEPROM
+uint8_t EEMEM child_counter = 0;
+uint8_t EEMEM parent_counter = 0;
 
 #define A_PARENT 0x001c
 #define A_CHILD  0x000b
@@ -43,12 +44,10 @@ mob_t tx_mob = {
 void tx_callback(uint8_t* data, uint8_t* len) {
   *len = 1;
   data[0] = eeprom_read_byte(&parent_counter);
-  //print("Data[0]: %d\n",data[0]);
   eeprom_update_byte(&parent_counter,data[0]+1);//parent_counter += 1;
-  //Note: This has to be data[0]+1 instead of parent_counter+1
   print("Parent counter incremented\n");
 
-  uint8_t parent_read = eeprom_read_byte(&parent_counter);//replaces old print statements
+  uint8_t parent_read = eeprom_read_byte(&parent_counter);
   print("parent_counter: %d\n", parent_read);
 }
 
@@ -56,9 +55,8 @@ void rx_callback(uint8_t* data, uint8_t len) {
   print("TX received!\n");
   if (len != 0) {
         eeprom_update_byte(&child_counter,data[0]);//child_counter = data[0];
-        //print("Data[0]: %d\n",data[0]);
 
-        uint8_t child_read = eeprom_read_byte(&child_counter);//replaces old print statement
+        uint8_t child_read = eeprom_read_byte(&child_counter);
         print("child_counter: %d\n", child_read);
   } else
   {
