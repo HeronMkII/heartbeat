@@ -35,9 +35,9 @@ void tx_callback(uint8_t*, uint8_t*);
 
 //define fixed EEPROM address to store the states of each SSM.
 //addresses are chosen arbitrary. Possible future work-> EEPROM organization
-#define OBC_EEPROM_ADDRESS 0x00
-#define PAY_EEPROM_ADDRESS 0x08
-#define EPS_EEPROM_ADDRESS 0x10
+#define OBC_EEPROM_ADDRESS 0x00 //0 in base 10
+#define PAY_EEPROM_ADDRESS 0x08 //8 in base 10
+#define EPS_EEPROM_ADDRESS 0x10 //16 in base 10
 
 //Declare global variables to keep track on state changes in each SSM
 //Current mechanism to simulate state changes and for readability purposes
@@ -89,19 +89,99 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
 
 void rx_callback(uint8_t* state_data, uint8_t len) {
   print("Receive updates state data from EPS!\n");
-  if (len != 3) {
-    //Here assume the state data received are all valid and logical
-    //Error checking functions to be implemented soon
-    //Update the state data for all 3 SSMs in EEPROM
+  //Perform preliminary error checking
+  //(in place of to-be-implemented error checking module)
+
+  //1 for pass, 0 for failure of any test
+  uint8_t pass = 1;
+  pass = error_check(uint8_t* state_data, uint8_t len);//returns 0 if any error
+  if (pass == 1){
+  //Update the state data for all 3 SSMs in EEPROM
     eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,state_data[0]);
     eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,state_data[1]);
     eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,state_data[2]);
-
-    //Some print statements for testing and debugging purposes
-  } else {
-  print("State data received does not have length of 3\n");
-  //Call Error Handling (to be implemented)
   }
+  else{
+    print("ERROR OCCURED, DID NOT UPDATE\n");
+  }
+    //Some print statements for testing and debugging purposes
+  }
+
+int error_check(uint8_t* state_data, uint8_t len){
+  int pass = 1;
+  //Arbitrary min/max values
+  int max_state = 100;
+  int min_state = 1;
+  //Error checking procedure
+  if (is_empty(*len) == 0){
+    pass = 0;
+    return pass;//return here if empty
+  }
+  if (len_check(len) == 0){
+    pass = 0;
+  }
+  //If any test fails, return 0
+  //old value, new value
+  if (increment_check((uint8_t*)OBC_EEPROM_ADDRESS,state_data[0]) == 0){
+    pass = 0;
+  }
+  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[1]) == 0){
+    pass = 0;
+  }
+  if (increment_check((uint8_t*)EPS_EEPROM_ADDRESS,state_data[2]) == 0){
+    pass = 0;
+  }
+  if (in_range_check(state_data[0],min_state,max_state) == 0){
+    pass = 0;
+  }
+  if (in_range_check(state_data[1],min_state,max_state) == 0){
+    pass = 0;
+  }
+  if (in_range_check(state_data[2],min_state,max_state) == 0){
+    pass = 0;
+  }
+  return pass;
+}
+
+int len_check(uint8_t len){
+  //len must be equal to 3
+  if (len == 3){
+    print("Passed len_check\n");
+    return 1;
+  }
+  print("Error: Incorrect length\n");
+  return 0;
+}
+
+int increment_check(uint8_t old_val, uint8_t new_val){
+  //Assume that only valid increment is ++ or same
+  if (new_val == old_val +1 || new_val == old_val){
+    print("Passed increment_check\n");
+    return 1;
+  }
+  print("Error: Incorrect increment\n");
+  return 0;
+}
+
+
+int is_empty_check(uint8_t* state){
+  //state must not be empty
+  if (*state == NULL){
+    print("Error: NULL state\n");
+    return 0;
+  }
+  print("Passed is_empty\n");
+  return 1;
+}
+
+int in_range_check(uint8_t state, uint8_t min, uint8_t max){
+  //Verify that state is within valid range
+  if (state < min || state > max){
+    print("Error: Invalid range\n");
+    return 0;
+  }
+  print("Passed in_range\n");
+  return 1;
 }
 
 int main() {
