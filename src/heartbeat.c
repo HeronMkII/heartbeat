@@ -122,10 +122,10 @@ void rx_callback(uint8_t* state_data, uint8_t len) {
   }
 
 uint8_t error_check(uint8_t* state_data, uint8_t len){
-  int pass = 1;
+  uint8_t pass = 1;
   //Arbitrary min/max values
-  int max_state = 2;
-  int min_state = 0;
+  uint8_t max_state = 2;
+  uint8_t min_state = 0;
   //Error checking procedure
   if (len_check(len) == 0){
     pass = 0;
