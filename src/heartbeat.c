@@ -26,12 +26,12 @@ void rx_callback(uint8_t*, uint8_t);
 void tx_callback(uint8_t*, uint8_t*);
 void init_eeprom();
 
-int error_check(uint8_t* state_data, uint8_t len);
-int len_check(uint8_t len);
-int increment_check(uint8_t* old_val, uint8_t new_val);
-int same_val_check(uint8_t* old_val, uint8_t new_val);
-int is_empty_check(uint8_t* state);
-int in_range_check(uint8_t state, uint8_t min, uint8_t max);
+uint8_t error_check(uint8_t* state_data, uint8_t len);
+uint8_t len_check(uint8_t len);
+uint8_t increment_check(uint8_t* old_val, uint8_t new_val);
+uint8_t same_val_check(uint8_t* old_val, uint8_t new_val);
+uint8_t is_empty_check(uint8_t* state);
+uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max);
 
 
 //heartbeat ID for each SSM to send CAN messages
@@ -55,9 +55,11 @@ int in_range_check(uint8_t state, uint8_t min, uint8_t max);
 //Current mechanism to simulate state changes and for readability purposes
 //(subject to change in the next or final iteration)
 //At start of program, the initial state of each SSM is zero.
-uint8_t OBC_state = 0;
-uint8_t PAY_state = 0;
-uint8_t EPS_state = 0;
+uint8_t OBC_state = 0;//2
+uint8_t PAY_state = 0;//3
+uint8_t EPS_state = 0;//4
+
+uint8_t CAN_MSG_RCV = 0;
 
 mob_t rx_mob = {
   .mob_num = 0,
@@ -92,9 +94,9 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
   //After updating its own EEPROM, OBC sends updated state data to PAY
   //Always send the state_data as an array that consists all states data all 3 SSMs
   //Can also implement this using block access (Bonnie is too lazy to look it up :p )
-  state_data[0] = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
-  state_data[1] = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
-  state_data[2] = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
+  state_data[2] = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
+  state_data[3] = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
+  state_data[4] = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
 
   //Some print statements for testing and debugging purposes
 }
@@ -105,20 +107,21 @@ void rx_callback(uint8_t* state_data, uint8_t len) {
   //(in place of to-be-implemented error checking module)
   //1 for pass, 0 for failure of any test
   uint8_t pass = 1;
-  //pass = error_check(uint8_t* state_data, uint8_t len);//returns 0 if any error
-  if (pass == 1){
+  pass = error_check(state_data,len);//returns 0 if any error
+  if (state_data[1] == 2 && pass == 1){//if in heartbeat and passes error checking
   //Update the state data for all 3 SSMs in EEPROM
-    eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,state_data[0]);
-    eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,state_data[1]);
-    eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,state_data[2]);
+    CAN_MSG_RCV = 1;
+    eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]);
+    eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,state_data[3]);
+    eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,state_data[4]);
   }
   else{
-    print("ERROR OCCURED, DID NOT UPDATE\n");
+    print("ERROR OCCURED, DID NOT UPDATE or NOT IN HEARTBEAT\n");
   }
     //Some print statements for testing and debugging purposes
   }
 
-int error_check(uint8_t* state_data, uint8_t len){
+uint8_t error_check(uint8_t* state_data, uint8_t len){
   int pass = 1;
   //Arbitrary min/max values
   int max_state = 2;
@@ -134,32 +137,32 @@ int error_check(uint8_t* state_data, uint8_t len){
   //If any test fails, return 0
   //old value, new value
   //Check if OBC has same value
-  if (same_val_check((uint8_t*)OBC_EEPROM_ADDRESS,state_data[0]) == 0){//PAY
+  if (same_val_check((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]) == 0){//PAY
     pass = 0;
   }
 
-  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[1]) == 0 &&
-      same_val_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[1]) == 0){//PAY
-    pass = 0;
-  }
-  
-  if (increment_check((uint8_t*)EPS_EEPROM_ADDRESS,state_data[2]) == 0){//EPS
+  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[3]) == 0 &&
+      same_val_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[3]) == 0){//PAY
     pass = 0;
   }
 
-  if (in_range_check(state_data[0],min_state,max_state) == 0){//OBC
+  if (increment_check((uint8_t*)EPS_EEPROM_ADDRESS,state_data[4]) == 0){//EPS
     pass = 0;
   }
-  if (in_range_check(state_data[1],min_state,max_state) == 0){//PAY
+
+  if (in_range_check(state_data[2],min_state,max_state) == 0){//OBC
     pass = 0;
   }
-  if (in_range_check(state_data[2],min_state,max_state) == 0){//EPS
+  if (in_range_check(state_data[3],min_state,max_state) == 0){//PAY
+    pass = 0;
+  }
+  if (in_range_check(state_data[4],min_state,max_state) == 0){//EPS
     pass = 0;
   }
   return pass;
 }
 
-int len_check(uint8_t len){
+uint8_t len_check(uint8_t len){
   //len must be equal to 3
   if (len == 3){
     print("Passed len_check\n");
@@ -169,7 +172,7 @@ int len_check(uint8_t len){
   return 0;
 }
 
-int increment_check(uint8_t* old_val, uint8_t new_val){
+uint8_t increment_check(uint8_t* old_val, uint8_t new_val){
   //Assume that only valid increment is ++ or same
   if (new_val == *old_val +1){
     print("Passed increment_check\n");
@@ -179,7 +182,7 @@ int increment_check(uint8_t* old_val, uint8_t new_val){
   return 0;
 }
 
-int same_val_check(uint8_t* old_val, uint8_t new_val){
+uint8_t same_val_check(uint8_t* old_val, uint8_t new_val){
   if (new_val == *old_val){
     print("Passed same_val_check\n");
     return 1;
@@ -189,7 +192,7 @@ int same_val_check(uint8_t* old_val, uint8_t new_val){
 }
 
 
-int is_empty_check(uint8_t* state){
+uint8_t is_empty_check(uint8_t* state){
   //state must not be empty
   if (state == NULL){
     print("Error: NULL state\n");
@@ -199,7 +202,7 @@ int is_empty_check(uint8_t* state){
   return 1;
 }
 
-int in_range_check(uint8_t state, uint8_t min, uint8_t max){
+uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max){
   //Verify that state is within valid range
   if (state < min || state > max){
     print("Error: Invalid range\n");
@@ -216,13 +219,21 @@ void init_eeprom(){
   eeprom_update_dword((uint32_t*)INIT_WORD,DEADBEEF);
 }
 
-int main() {
+uint8_t main() {
   init_uart();
   init_can();
 
   //Boot Sequence: Retrieve latest state from its own EEPROM. Then assign the state
   //to itself by first going through switch statements, then find the appropriate
   //funtion calls to that specific state and execute it.
+
+  //Change to while loop, wait for message before switch statements
+  while(CAN_MSG_RCV == 0){
+    //wait for message from OBC, which can change can_msg_rcv
+    //Only enter this with fresh start
+    //flag is set to 1 in rx_callback
+  }
+
   if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF){
     init_eeprom();
   }
@@ -246,6 +257,7 @@ int main() {
     default:
       print("OBC is in ERROR state\n");
       break;
+      //set can_msg_rcv to 0?
   }
 
   init_rx_mob(&rx_mob);
