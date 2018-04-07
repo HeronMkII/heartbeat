@@ -48,6 +48,7 @@ int in_range_check(uint8_t state, uint8_t min, uint8_t max);
 #define PAY_EEPROM_ADDRESS 0x08 //8 in base 10
 #define EPS_EEPROM_ADDRESS 0x10 //16 in base 10
 #define INIT_WORD 0x18 //24 in base 10, stores init_word
+
 #define DEADBEEF 0xdeadbeef
 
 //Declare global variables to keep track on state changes in each SSM
@@ -133,23 +134,26 @@ int error_check(uint8_t* state_data, uint8_t len){
   //If any test fails, return 0
   //old value, new value
   //Check if OBC has same value
-  if (same_val_check((uint8_t*)OBC_EEPROM_ADDRESS,state_data[0]) == 0){
+  if (same_val_check((uint8_t*)OBC_EEPROM_ADDRESS,state_data[0]) == 0){//PAY
     pass = 0;
   }
-  if (increment_check((uint8_t*)EPS_EEPROM_ADDRESS,state_data[1]) == 0){
+
+  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[1]) == 0 &&
+      same_val_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[1]) == 0){//PAY
     pass = 0;
   }
-  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[2]) == 0 &&
-      same_val_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[0]) == 0){
+  
+  if (increment_check((uint8_t*)EPS_EEPROM_ADDRESS,state_data[2]) == 0){//EPS
     pass = 0;
   }
-  if (in_range_check(state_data[0],min_state,max_state) == 0){
+
+  if (in_range_check(state_data[0],min_state,max_state) == 0){//OBC
     pass = 0;
   }
-  if (in_range_check(state_data[1],min_state,max_state) == 0){
+  if (in_range_check(state_data[1],min_state,max_state) == 0){//PAY
     pass = 0;
   }
-  if (in_range_check(state_data[2],min_state,max_state) == 0){
+  if (in_range_check(state_data[2],min_state,max_state) == 0){//EPS
     pass = 0;
   }
   return pass;
