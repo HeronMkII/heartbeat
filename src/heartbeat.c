@@ -11,8 +11,8 @@ This iteration of heartbeat design has the following assumptions:
    and then send the updated state data to its parent via CAN.
 4. The state data transmits through CAN, is an array with size of uint8_t, and
      length of 5, with the following array structure:
-         [0]    |   [1]   |   [2]   |   [3]   |   [4]
-     Who's from | packet  |OBC state|EPS state|PAY state
+    |     [0]   |   [1]   |   [2]   |   [3]   |   [4]   |
+    |Who's from | packet  |OBC state|EPS state|PAY state|
      *The packet of heartbeat is 2.
 5. Error checking for state data is implemented (beta).
 */
@@ -85,7 +85,7 @@ mob_t tx_mob = {
 void tx_callback(uint8_t* state_data, uint8_t* len) {
   //state_data is an array of length 3 that consists of state data of OBC, PAY,
   //and EPS, in this order.
-  *len = 3;
+  *len = 5;
   //Simulate a state change by incrementing the state of OBC
   OBC_state += 1;
   //Upon state change, OBC first updates the state data in its own EEPROM
@@ -129,9 +129,8 @@ uint8_t error_check(uint8_t* state_data, uint8_t len){
   uint8_t max_state = 2;
   uint8_t min_state = 0;
   //Error checking procedure
-  if (len_check(len) == 0){
+  if (is_empty_check(state_data) == 0){
     pass = 0;
-    return pass;//return here if empty
   }
   if (len_check(len) == 0){
     pass = 0;
@@ -139,34 +138,34 @@ uint8_t error_check(uint8_t* state_data, uint8_t len){
   //If any test fails, return 0
   //old value, new value
   //Check if OBC has same value
-  if (same_val_check((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]) == 0){//OBC
+
+  //Error checking for 2 board case (OBC & PAY)
+  //OBC should stay the same
+  if (same_val_check((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]) == 0){
+    pass = 0;
+  }
+  //PAY should increment by one
+  //Regular poking does not occur, so PAY would never stay the same
+  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]) == 0 /*&&
+  same_val_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]) == 0*/){//PAY
     pass = 0;
   }
 
-  if (increment_check((uint8_t*)EPS_EEPROM_ADDRESS,state_data[3]) == 0 &&
-      same_val_check((uint8_t*)EPS_EEPROM_ADDRESS,state_data[3]) == 0){//EPS
-    pass = 0;
-  }
-
-  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]) == 0){//PAY
-    pass = 0;
-  }
-
+  //Verifies that OBC's state is in the valid range [0,2]
   if (in_range_check(state_data[2],min_state,max_state) == 0){//OBC
     pass = 0;
   }
-  if (in_range_check(state_data[3],min_state,max_state) == 0){//EPS
+
+  //Verifies that PAY's state is in the valid range [0,2]
+  if (in_range_check(state_data[4],min_state,max_state) == 0){//PAY
     pass = 0;
   }
-  if (in_range_check(state_data[4],min_state,max_state) == 0){//EPS
-    pass = 0;
-  }
-  return pass;
+    return pass;
 }
 
 uint8_t len_check(uint8_t len){
-  //len must be equal to 3
-  if (len == 3){
+  //len must be equal to 5
+  if (len == 5){
     print("Passed len_check\n");
     return 1;
   }
