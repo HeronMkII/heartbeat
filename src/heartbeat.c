@@ -4,13 +4,16 @@ This iteration of heartbeat design has the following assumptions:
 1. This code is written from the perspective of OBC
    (Will generalize this code, to lib-common structure soon)
 2. The triangular configuration of heartbeat is set as:
-    OBC -> PAY (OBC sends state data to PAY) (PAY is the parent of OBC)
-    PAY -> EPS (PAY sends state data to EPS)
-    EPS -> OBC (EPS sends state data to OBC)
+    OBC -> EPS (OBC sends state data to PAY) (PAY is the parent of OBC)
+    EPS -> PAY (PAY sends state data to EPS)
+    PAY -> OBC (EPS sends state data to OBC)
 3. When there is a state update, a SSM needs to first update its own EEPROM,
    and then send the updated state data to its parent via CAN.
 4. The state data transmits through CAN, is an array with size of uint8_t, and
-     length of 3. state data stored in order in the array as OBC, PAY, EPS.
+     length of 5, with the following array structure:
+         [0]    |   [1]   |   [2]   |   [3]   |   [4]
+     Who's from   packet   OBC state   EPS        PAY
+     *The packet of heartbeat is 2.
 5. Error checking for state data is implemented (beta).
 */
 
@@ -23,6 +26,7 @@ This iteration of heartbeat design has the following assumptions:
 
 void rx_callback(uint8_t*, uint8_t);
 void tx_callback(uint8_t*, uint8_t*);
+
 void init_eeprom();
 
 uint8_t error_check(uint8_t* state_data, uint8_t len);
@@ -55,8 +59,8 @@ uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max);
 //(subject to change in the next or final iteration)
 //At start of program, the initial state of each SSM is zero.
 uint8_t OBC_state = 0;//2
-uint8_t PAY_state = 0;//3
-uint8_t EPS_state = 0;//4
+uint8_t EPS_state = 0;//3
+uint8_t PAY_state = 0;//4
 
 uint8_t CAN_MSG_RCV = 0;
 
@@ -101,9 +105,8 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
 }
 
 void rx_callback(uint8_t* state_data, uint8_t len) {
-  print("Receive updates state data from EPS!\n");
+  print("Receive updates state data from PAY!\n");
   //Perform preliminary error checking
-  //(in place of to-be-implemented error checking module)
   //1 for pass, 0 for failure of any test
   uint8_t pass = 1;
   pass = error_check(state_data,len);//returns 0 if any error
