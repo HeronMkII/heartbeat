@@ -229,6 +229,23 @@ uint8_t main() {
   //to itself by first going through switch statements, then find the appropriate
   //funtion calls to that specific state and execute it.
 
+//changed this to be at the beginning
+  if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF){
+    init_eeprom();
+  }
+  else{
+    OBC_state = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
+    EPS_state = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
+    PAY_state = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
+  }
+
+//I think it needs to be initialized to recieve requests
+  init_tx_mob(&tx_mob);
+  init_rx_mob(&rx_mob);
+  if (is_paused(&rx_mob)){//what does this line of code do?
+    print("WHAT??\n");
+  }
+
   //Change to while loop, wait for message before switch statements
   while(CAN_MSG_RCV == 0){
     //wait for message from OBC, which can change can_msg_rcv
@@ -236,25 +253,15 @@ uint8_t main() {
     //flag is set to 1 in rx_callback
   }
 
-  if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF){
-    init_eeprom();
-  }
-
-  else{
-    OBC_state = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
-    EPS_state = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
-    PAY_state = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
-  }
-
   switch(OBC_state){
     case 0:
-      print("OBC is in state 0\n");
+      print("OBC is in state 0, PAY is %d\n", PAY_state);
       break;
     case 1:
-      print("OBC is in state 1\n");
+      print("OBC is in state 1, PAY is %d\n", PAY_state);
       break;
     case 2:
-      print("OBC is in state 2\n");
+      print("OBC is in state 2, PAY is %d\n", PAY_state);
       break;
     default:
       print("OBC is in ERROR state\n");
@@ -262,16 +269,11 @@ uint8_t main() {
       //set can_msg_rcv to 0?
   }
 
-  init_rx_mob(&rx_mob);
-  if (is_paused(&rx_mob)){
-    print("WHAT??\n");
-  }
-
-  init_tx_mob(&tx_mob);
-  while (1) {
+//soft reset at the end: I don't think it's an infinit while loop?
+  //while (1) {
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
       _delay_ms(100);
-    };
+    //};
     return 0;
 }
