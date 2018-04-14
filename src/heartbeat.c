@@ -1,5 +1,5 @@
 /*Heartbeat 2.0.1 (Yay!!)
-By Jack and Bonnie April 14, 2018
+By Jack and Bonnie April 14, 2018 (v. 2.0 04/04/18)
 This iteration of heartbeat design has the following assumptions:
 1. This code is written from the perspective of OBC
    (Will generalize this code, to lib-common structure soon)
@@ -12,7 +12,7 @@ This iteration of heartbeat design has the following assumptions:
 4. The state data transmits through CAN, is an array with size of uint8_t, and
      length of 5, with the following array structure:
          [0]    |   [1]   |   [2]   |   [3]   |   [4]
-     Who's from   packet   OBC state   EPS        PAY
+     Who's from | packet  |OBC state|EPS state|PAY state
      *The packet of heartbeat is 2.
 5. Error checking for state data is implemented (beta).
 */
@@ -40,16 +40,16 @@ uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max);
 //heartbeat ID for each SSM to send CAN messages
 #define OBC_PARENT 0x001c
 #define OBC_CHILD  0x000b
-#define PAY_PARENT 0x001a
-#define PAY_CHILD  0x000c
-#define EPS_PARENT 0x001b
-#define EPS_CHILD  0x000a
+#define EPS_PARENT 0x001a
+#define EPS_CHILD  0x000c
+#define PAY_PARENT 0x001b
+#define PAY_CHILD  0x000a
 
 //define fixed EEPROM address to store the states of each SSM.
 //addresses are chosen arbitrary. Possible future work-> EEPROM organization
 #define OBC_EEPROM_ADDRESS 0x00
-#define PAY_EEPROM_ADDRESS 0x01
-#define EPS_EEPROM_ADDRESS 0x02
+#define EPS_EEPROM_ADDRESS 0x01
+#define PAY_EEPROM_ADDRESS 0x02
 #define INIT_WORD 0x03
 
 #define DEADBEEF 0xdeadbeef
@@ -98,8 +98,8 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
   //Always send the state_data as an array that consists all states data all 3 SSMs
   //Can also implement this using block access (Bonnie is too lazy to look it up :p )
   state_data[2] = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
-  state_data[3] = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
-  state_data[4] = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
+  state_data[3] = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
+  state_data[4] = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
 
   //Some print statements for testing and debugging purposes
 }
@@ -114,11 +114,11 @@ void rx_callback(uint8_t* state_data, uint8_t len) {
   //Update the state data for all 3 SSMs in EEPROM
     CAN_MSG_RCV = 1;
     eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]);
-    eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,state_data[3]);
-    eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,state_data[4]);
+    eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,state_data[3]);
+    eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]);
   }
   else{
-    print("ERROR OCCURED, DID NOT UPDATE or NOT IN HEARTBEAT\n");
+    print("ERROR OCCURED, DID NOT UPDATE or NOT HEARTBEAT PACKET\n");
   }
     //Some print statements for testing and debugging purposes
   }
@@ -139,23 +139,23 @@ uint8_t error_check(uint8_t* state_data, uint8_t len){
   //If any test fails, return 0
   //old value, new value
   //Check if OBC has same value
-  if (same_val_check((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]) == 0){//PAY
+  if (same_val_check((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]) == 0){//OBC
     pass = 0;
   }
 
-  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[3]) == 0 &&
-      same_val_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[3]) == 0){//PAY
+  if (increment_check((uint8_t*)EPS_EEPROM_ADDRESS,state_data[3]) == 0 &&
+      same_val_check((uint8_t*)EPS_EEPROM_ADDRESS,state_data[3]) == 0){//EPS
     pass = 0;
   }
 
-  if (increment_check((uint8_t*)EPS_EEPROM_ADDRESS,state_data[4]) == 0){//EPS
+  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]) == 0){//PAY
     pass = 0;
   }
 
   if (in_range_check(state_data[2],min_state,max_state) == 0){//OBC
     pass = 0;
   }
-  if (in_range_check(state_data[3],min_state,max_state) == 0){//PAY
+  if (in_range_check(state_data[3],min_state,max_state) == 0){//EPS
     pass = 0;
   }
   if (in_range_check(state_data[4],min_state,max_state) == 0){//EPS
@@ -216,8 +216,8 @@ uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max){
 
 void init_eeprom(){
   eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,0);
-  eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,0);
   eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,0);
+  eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,0);
   eeprom_update_dword((uint32_t*)INIT_WORD,DEADBEEF);
 }
 
