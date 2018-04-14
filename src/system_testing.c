@@ -226,8 +226,8 @@ void init_eeprom(){
 //by removing same_val_check error function
 //can also change other boards state then sends that data
 void test_heartbeat(){
-  bool leave = FALSE;
-  while (leave == FALSE){
+  int leave = 0;
+  while (leave == 0){
     //wait 1 second before sending messages
     _delay_ms(1000);
     //change state (can change other state too)
@@ -252,7 +252,7 @@ void test_heartbeat_errors (){
 
   //Unexpected board changed/same_val_check
   printf("Unexpected board value change check");
-  PAY_state += 1
+  PAY_state += 1;
   resume_mob(&tx_mob);
   while (!is_paused(&tx_mob)) {}
   printf("Current OBC state is %d, PAY is %d", OBC_state, PAY_state);
@@ -277,6 +277,12 @@ uint8_t main() {
     PAY_state = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
   }
 
+  //testing state retrieval
+  printf("First boot sequence Expected: ~255. Other boot sequence expected __\n");
+  printf("First boot sequence Expected: ~255, Given: %d\n", OBC_state);
+  printf("First boot sequence Expected: ~255, Given: %d\n", PAY_state);
+  printf("First boot sequence Expected: ~255, Given: %d\n", EPS_state);
+
 //I think it needs to be initialized to recieve requests
   init_tx_mob(&tx_mob);
   init_rx_mob(&rx_mob);
@@ -290,7 +296,7 @@ uint8_t main() {
     //Only enter this with fresh start
     //flag is set to 1 in rx_callback
 
-/*Testing code
+//Testing code
     //change state every 1 second
     _delay_ms(1000);
     OBC_state += 1;
@@ -300,7 +306,7 @@ uint8_t main() {
     while (!is_paused(&tx_mob)) {}
       _delay_ms(100);
     //For individual testing, get out of loop to see state
-    //CAN_MSG_RCV == 1*/
+    //CAN_MSG_RCV == 1
   }
 
   switch(OBC_state){
