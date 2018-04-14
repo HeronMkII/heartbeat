@@ -1,5 +1,5 @@
-/*Heartbeat 2.0 (Yay!!)
-By Jack and Bonnie April 4, 2018
+/*Heartbeat 2.0.1 (Yay!!)
+By Jack and Bonnie April 14, 2018
 This iteration of heartbeat design has the following assumptions:
 1. This code is written from the perspective of OBC
    (Will generalize this code, to lib-common structure soon)
@@ -12,7 +12,6 @@ This iteration of heartbeat design has the following assumptions:
 4. The state data transmits through CAN, is an array with size of uint8_t, and
      length of 3. state data stored in order in the array as OBC, PAY, EPS.
 5. Error checking for state data is implemented (beta).
-Other Note: This code is untested (but should work in theory)
 */
 
 #include <uart/uart.h>
@@ -44,10 +43,10 @@ uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max);
 
 //define fixed EEPROM address to store the states of each SSM.
 //addresses are chosen arbitrary. Possible future work-> EEPROM organization
-#define OBC_EEPROM_ADDRESS 0x00 //0 in base 10
-#define PAY_EEPROM_ADDRESS 0x08 //8 in base 10
-#define EPS_EEPROM_ADDRESS 0x10 //16 in base 10
-#define INIT_WORD 0x18 //24 in base 10, stores init_word
+#define OBC_EEPROM_ADDRESS 0x00
+#define PAY_EEPROM_ADDRESS 0x01
+#define EPS_EEPROM_ADDRESS 0x02
+#define INIT_WORD 0x03
 
 #define DEADBEEF 0xdeadbeef
 
