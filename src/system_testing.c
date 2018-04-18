@@ -220,12 +220,12 @@ void init_eeprom(){
 }
 
 //testing
-//For code without edits I added before
-//Can be for one or both boards (preferably for one though to test CAN_MSG_RCV)
+//One board will use this function, the other will use heartbeat.c
 //Changes its own state then sends that changed state to the other boards
+//Does not test CAN_MSG_RCV for one board
 //by removing same_val_check error function
 //can also change other boards state then sends that data
-void test_heartbeat(){
+void test_single_heartbeat(){
   int leave = 0;
   while (leave == 0){
     //wait 1 second before sending messages
@@ -238,6 +238,51 @@ void test_heartbeat(){
     while (!is_paused(&tx_mob)) {}
     printf("Current OBC state is %d, PAY is %d", OBC_state, PAY_state);
   }
+}
+
+//testing
+//Both boards can have this function
+//Changes its own state then sends that changed state to the other board
+//mobs sent may increase exponentially,
+//Potential problem in heartbeat.c: tx_mob does not allow it to go out of
+//the while loop
+void test_heartbeat(){
+  while(CAN_MSG_RCV == 0){
+    //wait for message from OBC, which can change can_msg_rcv
+    //Only enter this with fresh start
+    //flag is set to 1 in rx_callback
+
+    //change state every 0.5 seconds
+    _delay_ms(500);
+    OBC_state += 1;
+    //leave loop because of own state change
+    //can also send a tx_mob after this state change
+    CAN_MSG_RCV == 1;
+
+    print("Current flag state: %d\n", CAN_MSG_RCV);
+  }
+
+  switch(OBC_state){
+    case 0:
+      print("OBC is in state 0, PAY is %d\n", PAY_state);
+      break;
+    case 1:
+      print("OBC is in state 1, PAY is %d\n", PAY_state);
+      break;
+    case 2:
+      print("OBC is in state 2, PAY is %d\n", PAY_state);
+      break;
+    default:
+      print("OBC is in ERROR state\n");
+      break;
+      //set can_msg_rcv to 0?
+  }
+
+    resume_mob(&tx_mob);
+    while (!is_paused(&tx_mob)) {}
+    print("Tx mob sent\n\n");
+    _delay_ms(100);
+    return 0;
 }
 
 //test error coding for heartbeat
@@ -267,69 +312,32 @@ uint8_t main() {
   //to itself by first going through switch statements, then find the appropriate
   //funtion calls to that specific state and execute it.
 
-//changed this to be at the beginning
+//changed this to be at the beginning, would preferably be in init_heartbeat
   if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF){
+    printf("Deadbeef detected\n");
     init_eeprom();
   }
   else{
+    printf("First boot sequence\n");
     OBC_state = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
     EPS_state = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
     PAY_state = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
   }
 
   //testing state retrieval
+  //checking if deadbeef was entered
+  printf("initialized first val: %x",eeprom_read_dword((uint32_t*)INIT_WORD);
   printf("First boot sequence Expected: ~255. Other boot sequence expected __\n");
-  printf("First boot sequence Expected: ~255, Given: %d\n", OBC_state);
-  printf("First boot sequence Expected: ~255, Given: %d\n", PAY_state);
-  printf("First boot sequence Expected: ~255, Given: %d\n", EPS_state);
+  printf("OBC First boot sequence Expected: ~255, Given: %d\n", OBC_state);
+  printf("PAY First boot sequence Expected: ~255, Given: %d\n", PAY_state);
+  printf("EPS First boot sequence Expected: ~255, Given: %d\n\n", EPS_state);
 
-//I think it needs to be initialized to recieve requests
+  //Needs to be initialized to recieve requests
   init_tx_mob(&tx_mob);
   init_rx_mob(&rx_mob);
-  if (is_paused(&rx_mob)){//what does this line of code do?
-    print("WHAT??\n");
-  }
 
-  //Change to while loop, wait for message before switch statements
-  while(CAN_MSG_RCV == 0){
-    //wait for message from OBC, which can change can_msg_rcv
-    //Only enter this with fresh start
-    //flag is set to 1 in rx_callback
+  //testing functions
+  test_heartbeat();
 
-//Testing code
-    //change state every 1 second
-    _delay_ms(1000);
-    OBC_state += 1;
-
-    //send new state to other
-    resume_mob(&tx_mob);
-    while (!is_paused(&tx_mob)) {}
-      _delay_ms(100);
-    //For individual testing, get out of loop to see state
-    //CAN_MSG_RCV == 1
-  }
-
-  switch(OBC_state){
-    case 0:
-      print("OBC is in state 0, PAY is %d\n", PAY_state);
-      break;
-    case 1:
-      print("OBC is in state 1, PAY is %d\n", PAY_state);
-      break;
-    case 2:
-      print("OBC is in state 2, PAY is %d\n", PAY_state);
-      break;
-    default:
-      print("OBC is in ERROR state\n");
-      break;
-      //set can_msg_rcv to 0?
-  }
-
-//soft reset at the end: I don't think it's an infinit while loop?
-  //while (1) {
-    resume_mob(&tx_mob);
-    while (!is_paused(&tx_mob)) {}
-      _delay_ms(100);
-    //};
-    return 0;
+  return 0;
 }
