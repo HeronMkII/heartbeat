@@ -97,6 +97,7 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
   //After updating its own EEPROM, OBC sends updated state data to PAY
   //Always send the state_data as an array that consists all states data all 3 SSMs
   //Can also implement this using block access (Bonnie is too lazy to look it up :p )
+  state_data[1] = 2;
   state_data[2] = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
   state_data[3] = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
   state_data[4] = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
@@ -227,16 +228,24 @@ uint8_t main() {
   //Boot Sequence: Retrieve latest state from its own EEPROM. Then assign the state
   //to itself by first going through switch statements, then find the appropriate
   //funtion calls to that specific state and execute it.
-
-//changed this to be at the beginning
+  int fresh_restart;//fresh reset = 0 if not
   if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF){
     init_eeprom();
+    fresh_restart = 1;//fresh restart
   }
   else{
     OBC_state = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
     EPS_state = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
     PAY_state = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
+    fresh_restart = 0;
   }
+
+  print("initialized first val to: %x\n",eeprom_read_dword((uint32_t*)INIT_WORD));
+  print("First boot sequence Expected: 0. Other boot sequence expected __\n");
+  print("OBC Actual: %d\n", OBC_state);
+  print("PAY Actual: %d\n", PAY_state);
+  print("EPS Actual: %d\n\n", EPS_state);
+
 
 //I think it needs to be initialized to recieve requests
   init_tx_mob(&tx_mob);
@@ -246,10 +255,11 @@ uint8_t main() {
   }
 
   //Change to while loop, wait for message before switch statements
-  while(CAN_MSG_RCV == 0){
+  while(CAN_MSG_RCV == 0 && fresh_restart == 1){
     //wait for message from OBC, which can change can_msg_rcv
     //Only enter this with fresh start
     //flag is set to 1 in rx_callback
+    print("Waiting..");
   }
 
   switch(OBC_state){
@@ -267,12 +277,11 @@ uint8_t main() {
       break;
       //set can_msg_rcv to 0?
   }
-
-//soft reset at the end: I don't think it's an infinit while loop?
-  //while (1) {
-    resume_mob(&tx_mob);
-    while (!is_paused(&tx_mob)) {}
-      _delay_ms(100);
-    //};
+  
+    while (1) {
+      resume_mob(&tx_mob);
+      while (!is_paused(&tx_mob)) {}
+        _delay_ms(100);
+    }
     return 0;
 }
