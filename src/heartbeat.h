@@ -1,9 +1,7 @@
-#include <uart/uart.h>
-#include <uart/log.h>
-#include <can/can.h>
-#include <avr/eeprom.h>
-#define F_CPU 8
-#include <util/delay.h>
+/*Heartbeat functions
+By Brytni on April 28, 2018
+Contains all heartbeat.c functions
+*/
 
 void rx_callback(uint8_t*, uint8_t);
 void tx_callback(uint8_t*, uint8_t*);

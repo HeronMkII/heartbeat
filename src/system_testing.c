@@ -24,6 +24,29 @@ Other Note: This code is untested (but should work in theory)
 //#include <heartbeat/heartbeat.h>
 #include "heartbeat.h"
 
+uint8_t OBC_state = 0;//2
+uint8_t EPS_state = 0;//3
+uint8_t PAY_state = 0;//4
+
+uint8_t CAN_MSG_RCV = 0;
+
+mob_t rx_mob = {
+  .mob_num = 0,
+  .mob_type = RX_MOB,
+  .dlc = 1,
+  .id_tag = {  }, // ID of this nodes parent
+  .id_mask = { 0x00f },
+  .ctrl = default_rx_ctrl,
+  .rx_cb = rx_callback
+};
+
+mob_t tx_mob = {
+  .mob_num = 1,
+  .mob_type = TX_MOB,
+  .id_tag = { }, // ID of this nodes child
+  .ctrl = default_tx_ctrl,
+  .tx_data_cb = tx_callback
+};
 //testing
 //One board will use this function, the other will use heartbeat.c
 //Changes its own state then sends that changed state to the other boards
@@ -108,7 +131,7 @@ void test_heartbeat_errors (){
   while (!is_paused(&tx_mob)) {}
   print("Current OBC state is %d, PAY is %d", OBC_state, PAY_state);
 }
-
+/*
 
 uint8_t main() {
   init_uart();
@@ -151,3 +174,4 @@ eeprom_update_dword((uint32_t*)INIT_WORD,0xdededede);
 
   return 0;
 }
+*/
