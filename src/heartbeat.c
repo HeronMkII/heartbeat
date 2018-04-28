@@ -23,36 +23,8 @@ This iteration of heartbeat design has the following assumptions:
 #include <avr/eeprom.h>
 #define F_CPU 8
 #include <util/delay.h>
-
-void rx_callback(uint8_t*, uint8_t);
-void tx_callback(uint8_t*, uint8_t*);
-
-void init_eeprom();
-
-uint8_t error_check(uint8_t* state_data, uint8_t len);
-uint8_t len_check(uint8_t len);
-uint8_t increment_check(uint8_t* old_val, uint8_t new_val);
-uint8_t same_val_check(uint8_t* old_val, uint8_t new_val);
-uint8_t is_empty_check(uint8_t* state);
-uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max);
-
-
-//heartbeat ID for each SSM to send CAN messages
-#define OBC_PARENT 0x001c
-#define OBC_CHILD  0x000b
-#define EPS_PARENT 0x001a
-#define EPS_CHILD  0x000c
-#define PAY_PARENT 0x001b
-#define PAY_CHILD  0x000a
-
-//define fixed EEPROM address to store the states of each SSM.
-//addresses are chosen arbitrary. Possible future work-> EEPROM organization
-#define OBC_EEPROM_ADDRESS 0x00
-#define EPS_EEPROM_ADDRESS 0x01
-#define PAY_EEPROM_ADDRESS 0x02
-#define INIT_WORD 0x03
-
-#define DEADBEEF 0xdeadbeef
+//#include <heartbeat/heartbeat.h>
+#include "heartbeat.h"
 
 //Declare global variables to keep track on state changes in each SSM
 //Current mechanism to simulate state changes and for readability purposes
@@ -277,7 +249,7 @@ uint8_t main() {
       break;
       //set can_msg_rcv to 0?
   }
-  
+
     while (1) {
       resume_mob(&tx_mob);
       while (!is_paused(&tx_mob)) {}
