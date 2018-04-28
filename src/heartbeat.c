@@ -58,7 +58,7 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
   //and EPS, in this order.
   *len = 5;
   //Simulate a state change by incrementing the state of OBC
-  OBC_state += 1;
+  //OBC_state += 1;
   //Upon state change, OBC first updates the state data in its own EEPROM
   //Should only need to update the state data for OBC
   eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS, OBC_state);
@@ -225,7 +225,7 @@ uint8_t main() {
     print("WHAT??\n");
   }
 
-  //Change to while loop, wait for message before switch statements
+  //Wait for message before switch statements
   while(CAN_MSG_RCV == 0 && fresh_restart == 1){
     //wait for message from OBC, which can change can_msg_rcv
     //Only enter this with fresh start
@@ -246,7 +246,6 @@ uint8_t main() {
     default:
       print("OBC is in ERROR state\n");
       break;
-      //set can_msg_rcv to 0?
   }
 
     while (1) {

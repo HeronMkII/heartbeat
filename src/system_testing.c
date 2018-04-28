@@ -13,6 +13,12 @@ This iteration of heartbeat design has the following assumptions:
      length of 3. state data stored in order in the array as OBC, PAY, EPS.
 5. Error checking for state data is implemented (beta).
 Other Note: This code is untested (but should work in theory)
+
+TODO
+1. Goes out of loop if can message is valid
+2. Does not go into loop if not fresh fresh_restart
+3. test_10_beats to see if it really increments to 10 and stays that way on restart
+4. test_heartbeat and test_heartbeat2
 */
 
 #include <uart/uart.h>
@@ -54,17 +60,37 @@ mob_t tx_mob = {
 //by removing same_val_check error function
 //can also change other boards state then sends that data
 void test_single_heartbeat(){
-  int leave = 0;
+  int leave = 0;//when to stop sending messages
   while (leave == 0){
-    //wait 1 second before sending messages
-    _delay_ms(20000);
-    //change state (can change other state too)
+    //wait 2 seconds before sending messages
+    _delay_ms(2000);
     OBC_state += 1;
-
     //send mob
+    //state changes in tx_mob
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
     print("Current OBC state is %d, PAY is %d", OBC_state, PAY_state);
+  }
+}
+
+//Changes state 10 times then stops
+void test_10_beats(){
+  int leave = 0;//when to stop sending messages
+  int OBC_end_state = OBC_state + 10;
+  while (leave == 0){
+    //wait 2 seconds before sending messages
+    _delay_ms(2000);
+    OBC_state += 1;
+    //send mob if state has not increased by 10. Be careful about state overflow
+    if (OBC_state <= OBC_end_state){
+      resume_mob(&tx_mob);
+      while (!is_paused(&tx_mob)) {}
+      print("Current OBC state is %d, PAY is %d", OBC_state, PAY_state);
+    }
+    else {
+      //leave = 1; //leave function
+      leave = 0;//stay in function
+    }
   }
 }
 
@@ -74,18 +100,22 @@ void test_single_heartbeat(){
 //mobs sent may increase exponentially,
 //Potential problem in heartbeat.c: tx_mob does not allow it to go out of
 //the while loop
+//one board has test_heartbeat and the other can have test_heartbeat or
+//test_heartbeat2
 void test_heartbeat(int fresh_restart){
   while(CAN_MSG_RCV == 0 && fresh_restart == 1){
+    print("Entered loop/Fresh restart\n");
     //wait for message from OBC, which can change can_msg_rcv
     //Only enter this with fresh start
     //flag is set to 1 in rx_callback
 
-    //change state every 0.5 seconds
-    _delay_ms(500);
-    OBC_state += 1;
-    //leave loop because of own state change
-    //can also send a tx_mob after this state change
-    CAN_MSG_RCV == 1;
+    //send changed state
+    resume_mob(&tx_mob);
+    while (!is_paused(&tx_mob)) {}
+    print("Tx mob sent\n\n");
+    _delay_ms(100);
+    //expected to leave loop because of own state change
+    //
 
     print("Current flag state: %d\n", CAN_MSG_RCV);
   }
@@ -107,6 +137,7 @@ void test_heartbeat(int fresh_restart){
   }
 
   while (1){
+    OBC_state += 1;
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
     print("Tx mob sent\n\n");
@@ -114,6 +145,43 @@ void test_heartbeat(int fresh_restart){
   }
 }
 
+//receives heartbeat at the beginning
+void test_heartbeat2(int fresh_restart){
+  while(CAN_MSG_RCV == 0 && fresh_restart == 1){
+    print("Entered loop/Fresh restart\n");
+    //wait for message from OBC, which can change can_msg_rcv
+    //Only enter this with fresh start
+    //flag is set to 1 in rx_callback
+
+    print("Current flag state: %d\n", CAN_MSG_RCV);
+  }
+
+  switch(OBC_state){
+    case 0:
+      print("OBC is in state 0, PAY is %d\n", PAY_state);
+      break;
+    case 1:
+      print("OBC is in state 1, PAY is %d\n", PAY_state);
+      break;
+    case 2:
+      print("OBC is in state 2, PAY is %d\n", PAY_state);
+      break;
+    default:
+      print("OBC is in ERROR state\n");
+      break;
+      //set can_msg_rcv to 0?
+  }
+
+  while (1){
+    PAY_state += 1;
+    resume_mob(&tx_mob);
+    while (!is_paused(&tx_mob)) {}
+    print("Tx mob sent\n\n");
+    _delay_ms(100);
+  }
+}
+
+/*
 //test error coding for heartbeat
 //only add this code to one board
 void test_heartbeat_errors (){
@@ -130,8 +198,7 @@ void test_heartbeat_errors (){
   resume_mob(&tx_mob);
   while (!is_paused(&tx_mob)) {}
   print("Current OBC state is %d, PAY is %d", OBC_state, PAY_state);
-}
-/*
+}*/
 
 uint8_t main() {
   init_uart();
@@ -142,7 +209,7 @@ uint8_t main() {
   //funtion calls to that specific state and execute it.
 
   int fresh_restart;
-//changed this to be at the beginning, would preferably be in init_heartbeat
+  //changed this to be at the beginning, would preferably be in init_heartbeat
   if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF){
     print("Deadbeef detected\n");
     init_eeprom();
@@ -164,14 +231,16 @@ uint8_t main() {
   print("PAY First boot sequence Expected: ~255, Given: %d\n", PAY_state);
   print("EPS First boot sequence Expected: ~255, Given: %d\n\n", EPS_state);
 
-//eeprom_update_dword((uint32_t*)INIT_WORD,0xddddffff);
+  //eeprom_update_dword((uint32_t*)INIT_WORD,0xddddffff);
   //Needs to be initialized to recieve requests
   init_tx_mob(&tx_mob);
   init_rx_mob(&rx_mob);
-eeprom_update_dword((uint32_t*)INIT_WORD,0xdededede);
+  //eeprom_update_dword((uint32_t*)INIT_WORD,0xdededede);
+
   //testing functions
   test_single_heartbeat();
 
+  while(1);//do nothing at end
+
   return 0;
 }
-*/
