@@ -1,8 +1,13 @@
+/*
+#ifndef HEARTBEAT_H
+#define HEARTBEAT_H
+
+
 /*Heartbeat functions
 By Brytni on April 28, 2018
 Contains all heartbeat.c functions
 */
-
+/*
 void rx_callback(uint8_t*, uint8_t);
 void tx_callback(uint8_t*, uint8_t*);
 void init_eeprom();
@@ -13,7 +18,6 @@ uint8_t increment_check(uint8_t* old_val, uint8_t new_val);
 uint8_t same_val_check(uint8_t* old_val, uint8_t new_val);
 uint8_t is_empty_check(uint8_t* state);
 uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max);
-
 
 //heartbeat ID for each SSM to send CAN messages
 #define OBC_PARENT 0x001c
@@ -31,3 +35,7 @@ uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max);
 #define INIT_WORD 0x18 //24 in base 10, stores init_word
 
 #define DEADBEEF 0xdeadbeef
+
+
+#endif
+*/

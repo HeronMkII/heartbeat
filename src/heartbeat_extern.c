@@ -17,7 +17,7 @@ This iteration of heartbeat design has the following assumptions:
 5. Error checking for state data is implemented (beta).
 */
 
-/*
+
 #include <uart/uart.h>
 #include <uart/log.h>
 #include <can/can.h>
@@ -25,31 +25,20 @@ This iteration of heartbeat design has the following assumptions:
 #define F_CPU 8
 #include <util/delay.h>
 //#include <heartbeat/heartbeat.h>
-#include "heartbeat.h"
+#include "heartbeat_extern.h"
+//#include "heartbeat_defines.h"
+#include <util/atomic.h>
 
-uint8_t OBC_state = 0;//2
-uint8_t EPS_state = 0;//3
-uint8_t PAY_state = 0;//4
-
-mob_t rx_mob = {
-  .mob_num = 0,
-  .mob_type = RX_MOB,
-  .dlc = 1,
-  .id_tag = {  }, // ID of this nodes parent
-  .id_mask = { 0x00f },
-  .ctrl = default_rx_ctrl,
-  .rx_cb = rx_callback
-};
-
-mob_t tx_mob = {
-  .mob_num = 1,
-  .mob_type = TX_MOB,
-  .id_tag = { }, // ID of this nodes child
-  .ctrl = default_tx_ctrl,
-  .tx_data_cb = tx_callback
-};
-
+extern uint8_t SELF_state;
+extern uint8_t SELF_EEPROM_ADDRESS;
+extern uint8_t OBC_state;//2
+extern uint8_t EPS_state;//3
+extern uint8_t PAY_state;//4
 uint8_t CAN_MSG_RCV = 0;
+
+extern mob_t rx_mob;
+extern mob_t tx_mob;
+
 
 //Declare global variables to keep track on state changes in each SSM
 //Current mechanism to simulate state changes and for readability purposes
@@ -61,10 +50,9 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
   //and EPS, in this order.
   *len = 5;
   //Simulate a state change by incrementing the state of OBC
-  OBC_state += 1;
+  //OBC_state += 1;
   //Upon state change, OBC first updates the state data in its own EEPROM
   //Should only need to update the state data for OBC
-  eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS, OBC_state);
   //eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS, PAY_state);
   //eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS, EPS_state);
 
@@ -72,10 +60,13 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
   //Always send the state_data as an array that consists all states data all 3 SSMs
   //Can also implement this using block access (Bonnie is too lazy to look it up :p )
   state_data[1] = 2;
-  state_data[2] = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
-  state_data[3] = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
-  state_data[4] = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
-
+  //NO INTERRUPTS WHILE WRITING TO EEPROM
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE){//Restores state of SREG upon exit
+    eeprom_update_byte((uint8_t*)SELF_EEPROM_ADDRESS, SELF_state);//update byte
+    state_data[2] = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
+    state_data[3] = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
+    state_data[4] = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
+  }
   //Some print statements for testing and debugging purposes
 }
 
@@ -84,13 +75,16 @@ void rx_callback(uint8_t* state_data, uint8_t len) {
   //Perform preliminary error checking
   //1 for pass, 0 for failure of any test
   uint8_t pass = 1;
-  pass = error_check(state_data,len);//returns 0 if any error
+  //pass = error_check(state_data,len);//returns 0 if any error
   if (state_data[1] == 2 && pass == 1){//if in heartbeat and passes error checking
   //Update the state data for all 3 SSMs in EEPROM
     CAN_MSG_RCV = 1;
-    eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]);
-    eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,state_data[3]);
-    eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]);
+    //no interrupts while writing to EEPROM
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {//Restores state of SREG afterwards
+      eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]);
+      eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,state_data[3]);
+      eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]);
+    }
   }
   else{
     print("ERROR OCCURED, DID NOT UPDATE or NOT HEARTBEAT PACKET\n");
@@ -128,9 +122,7 @@ uint8_t error_check(uint8_t* state_data, uint8_t len){
   }
   //PAY should increment by one
   //Regular poking does not occur, so PAY would never stay the same
-  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]) == 0){//PAY
-  //if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]) == 0 &&
-  //same_val_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]) == 0){//PAY
+  if (increment_check((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]) == 0 ){//PAY
     pass = 0;
   }
 
@@ -203,6 +195,7 @@ void init_eeprom(){
   eeprom_update_dword((uint32_t*)INIT_WORD,DEADBEEF);
 }
 
+/*
 uint8_t main() {
   init_uart();
   init_can();
