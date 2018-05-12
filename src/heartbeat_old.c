@@ -17,7 +17,7 @@ This iteration of heartbeat design has the following assumptions:
 5. Error checking for state data is implemented (beta).
 */
 
-
+/*
 #include <uart/uart.h>
 #include <uart/log.h>
 #include <can/can.h>
@@ -265,4 +265,4 @@ uint8_t main() {
         _delay_ms(100);
     }
     return 0;
-}
+}*/
