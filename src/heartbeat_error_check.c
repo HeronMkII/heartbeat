@@ -68,7 +68,7 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
   //After updating its own EEPROM, OBC sends updated state data to PAY
   //Always send the state_data as an array that consists all states data all 3 SSMs
 
-  //Verify that all state data elements are in valid range
+  //Verify that all state data elements are in valid range (from perspective of OBC)
   //OBC range check (Assume state range is 0-10)
   state_data[1] = 2;
   if (in_range_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS), 0, 10)==1){
@@ -103,20 +103,21 @@ void rx_callback(uint8_t* state_data, uint8_t len) {
     CAN_MSG_RCV = 1;
     //Assuming that self is OBC, parent is EPS and child is PAY
     //Verify that increments are correct
+    //self
     if (same_val_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS), state_data[2])==1){
       eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]);
     }
     else{
       print("Unexpected state update (self)\n");//Do not update (Potential SSM reset?)
     }
-
+    //parent
     if (increment_check(eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS),state_data[3])==1){
       eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,state_data[3]);
     }
     else{
       print("Unexpected state update (parent)\n");
     }
-
+    //child
     if (increment_check(eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS),state_data[4])==1 || same_val_check(eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS),state_data[4])==1){
       eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]);
     }
