@@ -6,7 +6,7 @@
 By Brytni on April 28, 2018
 Contains all heartbeat.c functions
 */
-
+/*
 //Defines
 #define OBC_PARENT 0x001c
 #define OBC_CHILD  0x000b
@@ -46,4 +46,4 @@ uint8_t is_empty_check(uint8_t* state);
 uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max);
 
 
-//#endif
+//#endif*/

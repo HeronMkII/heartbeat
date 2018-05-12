@@ -14,13 +14,16 @@ This iteration of heartbeat design has the following assumptions:
 5. Error checking for state data is implemented (beta).
 Other Note: This code is untested (but should work in theory)
 
-TODO
-1. Goes out of loop if can message is valid
-2. Does not go into loop if not fresh fresh_restart
+Instructions
+1. Tests extern increments
+2. Does not go into loop if not fresh fresh_restart (test_heartbeat and test_heartbeat2)
 3. test_10_beats to see if it really increments to 10 and stays that way on restart
-4. test_heartbeat and test_heartbeat2
-*/
 
+TODO
+1. Interrupt loop Bug
+2. Masks for mobs
+*/
+/*
 #include <uart/uart.h>
 #include <uart/log.h>
 #include <can/can.h>
@@ -28,7 +31,7 @@ TODO
 #define F_CPU 8
 #include <util/delay.h>
 //#include <heartbeat/heartbeat.h>
-#include "heartbeat_extern.h"
+#include "heartbeat.h"
 
 uint8_t SELF_state = 0;//0 at fresh restart
 uint8_t SELF_EEPROM_ADDRESS = 0x00;//OBC
@@ -253,8 +256,7 @@ void test_heartbeat_errors (){
   while (!is_paused(&tx_mob)) {}
   print("Current OBC state is %d, PAY is %d", OBC_state, PAY_state);
 }*/
-
-
+/*
 uint8_t main() {
   init_uart();
   init_can();
@@ -332,7 +334,7 @@ SELF_EEPROM_ADDRESS = OBC_EEPROM_ADDRESS;
     print("Tx mob sent\n\n");
     _delay_ms(1000);
   }
-*/
+*//*
   while(1){}//do nothing at end
 
   return 0;
