@@ -30,7 +30,7 @@ Other Note: This code is untested (but should work in theory)
 3. test_10_beats to see if it really increments to 10 and stays that way on restart
 4. test_heartbeat and test_heartbeat2
 */
-
+/*
 #include <uart/uart.h>
 #include <uart/log.h>
 #include <can/can.h>
@@ -185,7 +185,7 @@ void init_eeprom(){
   eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,0);
   eeprom_update_dword((uint32_t*)INIT_WORD,DEADBEEF);
 }*/
-
+/*
 uint8_t main() {
   init_uart();
   init_can();
@@ -194,7 +194,7 @@ uint8_t main() {
   //to itself by first going through switch statements, then find the appropriate
   //funtion calls to that specific state and execute it.
 
-  int fresh_restart;
+  uint8_t fresh_restart;
   //changed this to be at the beginning, would preferably be in init_heartbeat
   if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF){
     print("Deadbeef detected\n");
@@ -237,3 +237,4 @@ uint8_t main() {
 
   return 0;
 }
+*/

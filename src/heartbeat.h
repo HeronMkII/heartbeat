@@ -1,5 +1,5 @@
-//#ifndef HEARTBEAT_H
-//#define HEARTBEAT_H
+#ifndef HEARTBEAT_H
+#define HEARTBEAT_H
 
 
 /*Heartbeat functions
@@ -44,4 +44,4 @@ uint8_t same_val_check(uint8_t old_val, uint8_t new_val);
 uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max);
 
 
-//#endif
+#endif

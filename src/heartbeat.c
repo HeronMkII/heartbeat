@@ -126,7 +126,7 @@ void rx_callback(uint8_t* state_data, uint8_t len) {
   print("EPS %d\n\n", EPS_state);
 }
 
-uint8_t is_empty_check(uint8_t* state){
+uint8_t is_empty_check(uint8_t* state) {
   //state must not be empty
   if (state == NULL){
     print("Error: NULL state\n");
@@ -136,7 +136,7 @@ uint8_t is_empty_check(uint8_t* state){
   return 1;
 }
 
-uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max){
+uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max) {
   //Verify that state is within valid range
   if (state < min || state > max){
     print("Error: Invalid range\n");
@@ -146,7 +146,7 @@ uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max){
   return 1;
 }
 
-uint8_t same_val_check(uint8_t old_val, uint8_t new_val){
+uint8_t same_val_check(uint8_t old_val, uint8_t new_val) {
   if (new_val == old_val){
     print("Passed same_val_check\n");
     return 1;
@@ -155,7 +155,7 @@ uint8_t same_val_check(uint8_t old_val, uint8_t new_val){
   return 0;
 }
 
-uint8_t increment_check(uint8_t old_val, uint8_t new_val){
+uint8_t increment_check(uint8_t old_val, uint8_t new_val) {
   //Assume that only valid increment is ++ or same
   if (new_val == old_val +1){
     print("Passed increment_check\n");
@@ -165,7 +165,7 @@ uint8_t increment_check(uint8_t old_val, uint8_t new_val){
   return 0;
 }
 
-uint8_t len_check(uint8_t len){
+uint8_t len_check(uint8_t len) {
   //len must be equal to 5
   if (len == 5){
     print("Passed len_check\n");
@@ -175,7 +175,7 @@ uint8_t len_check(uint8_t len){
   return 0;
 }
 
-void init_eeprom(){
+void init_eeprom() {
   eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,0);
   eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,0);
   eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,0);

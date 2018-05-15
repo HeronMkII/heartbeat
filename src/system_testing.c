@@ -23,7 +23,7 @@ TODO
 1. Interrupt loop Bug
 2. Masks for mobs
 */
-/*
+
 #include <uart/uart.h>
 #include <uart/log.h>
 #include <can/can.h>
@@ -65,8 +65,8 @@ mob_t tx_mob = {
 //Does not test CAN_MSG_RCV for one board
 //by removing same_val_check error function
 //can also change other boards state then sends that data
-void test_single_heartbeat(){
-  int leave = 0;//when to stop sending messages
+void test_single_heartbeat() {
+  uint8_t leave = 0;//when to stop sending messages
   while (leave == 0){
     //wait 2 seconds before sending messages
     _delay_ms(2000);
@@ -80,9 +80,9 @@ void test_single_heartbeat(){
 }
 
 //Changes state 10 times then stops
-void test_10_beats(){
-  int leave = 0;//when to stop sending messages
-  int EPS_end_state = EPS_state + 10;
+void test_10_beats() {
+  uint8_t leave = 0;//when to stop sending messages
+  uint8_t EPS_end_state = EPS_state + 10;
   SELF_state = EPS_state;
   SELF_EEPROM_ADDRESS = EPS_EEPROM_ADDRESS;
   while (leave <= 10){
@@ -105,9 +105,9 @@ void test_10_beats(){
 //the while loop
 //one board has test_heartbeat and the other can have test_heartbeat or
 //test_heartbeat2
-void test_heartbeat(int fresh_restart){
+void test_heartbeat(uint8_t fresh_restart) {
 
-  while(CAN_MSG_RCV == 0 && fresh_restart == 1){
+  while(CAN_MSG_RCV == 0 && fresh_restart == 1) {
 
     print("Entered loop/Fresh restart\n");
     //wait for message from OBC, which can change can_msg_rcv
@@ -139,7 +139,7 @@ void test_heartbeat(int fresh_restart){
       //set can_msg_rcv to 0?
   }
 
-  while (1){
+  while (1) {
     OBC_state += 1;
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
@@ -149,7 +149,7 @@ void test_heartbeat(int fresh_restart){
 }
 
 //receives heartbeat at the beginning
-void test_heartbeat2(int fresh_restart){
+void test_heartbeat2(uint8_t fresh_restart){
   while(CAN_MSG_RCV == 0 && fresh_restart == 1){
     print("Entered loop/Fresh restart\n");
     //wait for message from OBC, which can change can_msg_rcv
@@ -177,7 +177,7 @@ void test_heartbeat2(int fresh_restart){
 
   SELF_state = PAY_state;
   SELF_EEPROM_ADDRESS = PAY_EEPROM_ADDRESS;
-  while (1){
+  while (1) {
     SELF_state += 1;
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
@@ -189,20 +189,21 @@ void test_heartbeat2(int fresh_restart){
 //Checks to make sure extern works for SELF_state and SELF_ADDRESS
 //Code is for the board that sends the data
 //For the board that recieves the data, have it do nothing/just recieve interrupts
-int test_extern_state(int option){
+uint8_t test_extern_state(uint8_t option) {
   uint8_t BOARD_state, BOARD_EEPROM_ADDRESS;
-  if (option == 1){
+  if (option == 1) {//test OBC
     BOARD_state = OBC_state;
     BOARD_EEPROM_ADDRESS = OBC_EEPROM_ADDRESS;
   }
-  else if (option == 2){
+  else if (option == 2) {//test PAY
       BOARD_state = PAY_state;
       BOARD_EEPROM_ADDRESS = PAY_EEPROM_ADDRESS;
   }
-  else{
+  else {//test EPS
       BOARD_state = EPS_state;
       BOARD_EEPROM_ADDRESS = EPS_EEPROM_ADDRESS;
   }
+
   SELF_state = BOARD_state;//self
   SELF_EEPROM_ADDRESS = BOARD_EEPROM_ADDRESS;
   SELF_state += 1;//increment state
@@ -220,7 +221,7 @@ int test_extern_state(int option){
 }
 
 //tests extern for mobs and states/variables
-void test_extern(){
+void test_extern() {
   //Test CAN_MSG_RCV flag (if it changes as a valid heartbeat message is sent)
   print("CAN_MSG_RCV flag before expected: 0, Actual: %d\n", CAN_MSG_RCV);
   resume_mob(&tx_mob);
@@ -238,25 +239,6 @@ void test_extern(){
   print("Recieved: %d\n\n",test_extern_state(3));
 }
 
-/*
-//test error coding for heartbeat
-//only add this code to one board
-void test_heartbeat_errors (){
-  //State changed by 2/increment_check
-  print("State increment check");
-  OBC_state += 2;
-  resume_mob(&tx_mob);
-  while (!is_paused(&tx_mob)) {}
-  print("Current OBC state is %d, PAY is %d", OBC_state, PAY_state);
-
-  //Unexpected board changed/same_val_check
-  print("Unexpected board value change check");
-  PAY_state += 1;
-  resume_mob(&tx_mob);
-  while (!is_paused(&tx_mob)) {}
-  print("Current OBC state is %d, PAY is %d", OBC_state, PAY_state);
-}*/
-/*
 uint8_t main() {
   init_uart();
   init_can();
@@ -265,7 +247,7 @@ uint8_t main() {
   //Boot Sequence: Retrieve latest state from its own EEPROM. Then assign the state
   //to itself by first going through switch statements, then find the appropriate
   //funtion calls to that specific state and execute it.
-  int fresh_restart;//fresh reset = 0 if not
+  uint8_t fresh_restart;//fresh reset = 0 if not
   if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF){
     init_eeprom();
     fresh_restart = 1;//fresh restart
@@ -334,8 +316,8 @@ SELF_EEPROM_ADDRESS = OBC_EEPROM_ADDRESS;
     print("Tx mob sent\n\n");
     _delay_ms(1000);
   }
-*//*
-  while(1){}//do nothing at end
+*/
+  while(1) {}//do nothing at end
 
   return 0;
 }
