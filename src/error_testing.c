@@ -68,72 +68,72 @@ mob_t tx_mob = {
 
 //testing
 void test_valid_range(){
-  OBC_state = -5;
-  uint8_t OBC_end_state = OBC_state + 15;
+  SELF_state = -5;
+  uint8_t SELF_end_state = SELF_state + 15;
 
   for (uint8_t i =0;i<20;i++){
     //wait 200 ms before sending messages
-    OBC_state += 1;
+    SELF_state += 1;
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
-    print("Current state is %d\n", OBC_state);
-    in_range_check(OBC_state,0,2);
+    print("Current state is %d\n", SELF_state);
+    in_range_check(SELF_state,0,2);
   }
   }
 
 void test_increment(){
-  OBC_state = -5;
+  SELF_state = -5;
   print("\n\nThese increments should be valid\n");
   for (uint8_t i =0;i<5;i++){
     print("Increment by one:\n");
-    OBC_state += 1;
-    increment_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS),OBC_state);
+    SELF_state += 1;
+    increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
   }
-  OBC_state = -5;
+  SELF_state = -5;
   print("\n\nThese increments should not be valid\n");
   for (uint8_t i =0;i<5;i++){
     print("Increment by negative one:\n");
-    OBC_state += -1;
-    increment_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS),OBC_state);
+    SELF_state += -1;
+    increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
   }
   print("\n\nThese increments should not be valid\n");
   for (uint8_t i =0;i<5;i++){
     print("Increment by zero:\n");
-    OBC_state += 0;
-    increment_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS),OBC_state);
+    SELF_state += 0;
+    increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
   }
 }
 
 void test_same_val(){
-  OBC_state = -5;
+  SELF_state = -5;
   print("\n\nThese increments should not be valid\n");
   for (uint8_t i =0;i<5;i++){
     print("Increment by one:\n");
-    OBC_state += 1;
-    same_val_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS),OBC_state);
+    SELF_state += 1;
+    same_val_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
   }
-  OBC_state = -5;
+  SELF_state = -5;
   print("\n\nThese increments should not be valid\n");
   for (uint8_t i =0;i<5;i++){
     print("Increment by negative one:\n");
-    OBC_state += -1;
-    same_val_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS),OBC_state);
+    SELF_state += -1;
+    same_val_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
   }
   print("\n\nThese increments should be valid\n");
   for (uint8_t i =0;i<5;i++){
     print("Increment by zero:\n");
-    OBC_state += 0;
-    same_val_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS),OBC_state);
+    SELF_state += 0;
+    same_val_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
   }
