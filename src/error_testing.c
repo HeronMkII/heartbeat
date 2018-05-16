@@ -1,7 +1,7 @@
 //Error checking module
 //This code should be used to ensure that error checking in heartbeat.c
 //is consistent and robust
-//uint8_t main(void){
+//uint8_t main(void) {
 
 //}
 //How to handle empty states/empty state values?
@@ -41,7 +41,7 @@ Other Note: This code is untested (but should work in theory)
 #include "heartbeat.h"
 
 uint8_t SELF_state = 0;//0 at fresh restart
-uint8_t SELF_EEPROM_ADDRESS = 0x00;//OBC
+uint16_t SELF_EEPROM_ADDRESS = 0x0000;//OBC
 uint8_t OBC_state = 0;//0 at fresh restart
 uint8_t EPS_state = 0;//0
 uint8_t PAY_state = 0;//0
@@ -67,11 +67,11 @@ mob_t tx_mob = {
 };
 
 //testing
-void test_valid_range(){
+void test_valid_range() {
   SELF_state = -5;
   uint8_t SELF_end_state = SELF_state + 15;
 
-  for (uint8_t i =0;i<20;i++){
+  for (uint8_t i =0;i<20;i++) {
     //wait 200 ms before sending messages
     SELF_state += 1;
     resume_mob(&tx_mob);
@@ -81,10 +81,10 @@ void test_valid_range(){
   }
   }
 
-void test_increment(){
+void test_increment() {
   SELF_state = -5;
   print("\n\nThese increments should be valid\n");
-  for (uint8_t i =0;i<5;i++){
+  for (uint8_t i =0;i<5;i++) {
     print("Increment by one:\n");
     SELF_state += 1;
     increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
@@ -93,7 +93,7 @@ void test_increment(){
   }
   SELF_state = -5;
   print("\n\nThese increments should not be valid\n");
-  for (uint8_t i =0;i<5;i++){
+  for (uint8_t i =0;i<5;i++) {
     print("Increment by negative one:\n");
     SELF_state += -1;
     increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
@@ -101,7 +101,7 @@ void test_increment(){
     while (!is_paused(&tx_mob)) {}
   }
   print("\n\nThese increments should not be valid\n");
-  for (uint8_t i =0;i<5;i++){
+  for (uint8_t i =0;i<5;i++) {
     print("Increment by zero:\n");
     SELF_state += 0;
     increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
@@ -110,10 +110,10 @@ void test_increment(){
   }
 }
 
-void test_same_val(){
+void test_same_val() {
   SELF_state = -5;
   print("\n\nThese increments should not be valid\n");
-  for (uint8_t i =0;i<5;i++){
+  for (uint8_t i =0;i<5;i++) {
     print("Increment by one:\n");
     SELF_state += 1;
     same_val_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
@@ -122,7 +122,7 @@ void test_same_val(){
   }
   SELF_state = -5;
   print("\n\nThese increments should not be valid\n");
-  for (uint8_t i =0;i<5;i++){
+  for (uint8_t i =0;i<5;i++) {
     print("Increment by negative one:\n");
     SELF_state += -1;
     same_val_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
@@ -130,7 +130,7 @@ void test_same_val(){
     while (!is_paused(&tx_mob)) {}
   }
   print("\n\nThese increments should be valid\n");
-  for (uint8_t i =0;i<5;i++){
+  for (uint8_t i =0;i<5;i++) {
     print("Increment by zero:\n");
     SELF_state += 0;
     same_val_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
@@ -139,9 +139,9 @@ void test_same_val(){
   }
 }
 /*
-uint8_t increment_check(uint8_t old_val, uint8_t new_val){
+uint8_t increment_check(uint8_t old_val, uint8_t new_val) {
   //Assume that only valid increment is ++ or same
-  if (new_val == old_val +1){
+  if (new_val == old_val +1) {
     print("Passed increment_check\n");
     return 1;
   }
@@ -149,9 +149,9 @@ uint8_t increment_check(uint8_t old_val, uint8_t new_val){
   return 0;
 }
 
-uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max){
+uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max) {
   //Verify that state is within valid range
-  if (state < min || state > max){
+  if (state < min || state > max) {
     print("Error: Invalid state\n");
     print("Expected state between %d and %d (inclusive)\n",min,max);
     return 0;
@@ -160,8 +160,8 @@ uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max){
   return 1;
 }
 
-uint8_t same_val_check(uint8_t old_val, uint8_t new_val){
-  if (new_val == old_val){
+uint8_t same_val_check(uint8_t old_val, uint8_t new_val) {
+  if (new_val == old_val) {
     print("Passed same_val_check\n");
     return 1;
   }
@@ -169,9 +169,9 @@ uint8_t same_val_check(uint8_t old_val, uint8_t new_val){
   return 0;
 }
 
-uint8_t is_empty_check(uint8_t* state){
+uint8_t is_empty_check(uint8_t* state) {
   //state must not be empty
-  if (state == NULL){
+  if (state == NULL) {
     print("Error: NULL state\n");
     return 0;
   }
@@ -179,7 +179,7 @@ uint8_t is_empty_check(uint8_t* state){
   return 1;
 }
 
-void init_eeprom(){
+void init_eeprom() {
   eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,0);
   eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,0);
   eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,0);
@@ -196,7 +196,7 @@ uint8_t main() {
 
   uint8_t fresh_restart;
   //changed this to be at the beginning, would preferably be in init_heartbeat
-  if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF){
+  if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF) {
     print("Deadbeef detected\n");
     init_eeprom();
     fresh_restart = 1;
@@ -224,7 +224,7 @@ uint8_t main() {
   //eeprom_update_dword((uint32_t*)INIT_WORD,0xdededede);
 
 
-  while(1){
+  while(1) {
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
     //print("Hello World\n");
@@ -236,5 +236,4 @@ uint8_t main() {
   test_increment();
 
   return 0;
-}
-*/
+}*/

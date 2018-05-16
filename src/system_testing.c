@@ -34,7 +34,7 @@ TODO
 #include "heartbeat.h"
 
 uint8_t SELF_state = 0;//0 at fresh restart
-uint8_t SELF_EEPROM_ADDRESS = 0x00;//OBC
+uint16_t SELF_EEPROM_ADDRESS = 0x0000;//OBC
 uint8_t OBC_state = 0;//0 at fresh restart
 uint8_t EPS_state = 0;//0
 uint8_t PAY_state = 0;//0
@@ -67,7 +67,7 @@ mob_t tx_mob = {
 //can also change other boards state then sends that data
 void test_single_heartbeat() {
   uint8_t leave = 0;//when to stop sending messages
-  while (leave == 0){
+  while (leave == 0) {
     //wait 2 seconds before sending messages
     _delay_ms(2000);
     OBC_state += 1;
@@ -85,7 +85,7 @@ void test_10_beats() {
   uint8_t EPS_end_state = EPS_state + 10;
   SELF_state = EPS_state;
   SELF_EEPROM_ADDRESS = EPS_EEPROM_ADDRESS;
-  while (leave <= 10){
+  while (leave <= 10) {
     //wait 2 seconds before sending messages
     leave += 1;
     SELF_state += 1;
@@ -123,7 +123,7 @@ void test_heartbeat(uint8_t fresh_restart) {
     print("Current flag state: %d\n", CAN_MSG_RCV);
   }
 
-  switch(OBC_state){
+  switch(OBC_state) {
     case 0:
       print("OBC is in state 0, PAY is %d\n", PAY_state);
       break;
@@ -149,8 +149,8 @@ void test_heartbeat(uint8_t fresh_restart) {
 }
 
 //receives heartbeat at the beginning
-void test_heartbeat2(uint8_t fresh_restart){
-  while(CAN_MSG_RCV == 0 && fresh_restart == 1){
+void test_heartbeat2(uint8_t fresh_restart) {
+  while(CAN_MSG_RCV == 0 && fresh_restart == 1) {
     print("Entered loop/Fresh restart\n");
     //wait for message from OBC, which can change can_msg_rcv
     //Only enter this with fresh start
@@ -159,7 +159,7 @@ void test_heartbeat2(uint8_t fresh_restart){
     print("Current flag state: %d\n", CAN_MSG_RCV);
   }
 
-  switch(OBC_state){
+  switch(OBC_state) {
     case 0:
       print("OBC is in state 0, PAY is %d\n", PAY_state);
       break;
@@ -190,7 +190,8 @@ void test_heartbeat2(uint8_t fresh_restart){
 //Code is for the board that sends the data
 //For the board that recieves the data, have it do nothing/just recieve interrupts
 uint8_t test_extern_state(uint8_t option) {
-  uint8_t BOARD_state, BOARD_EEPROM_ADDRESS;
+  uint8_t BOARD_state;
+  uint16_t BOARD_EEPROM_ADDRESS;
   if (option == 1) {//test OBC
     BOARD_state = OBC_state;
     BOARD_EEPROM_ADDRESS = OBC_EEPROM_ADDRESS;
@@ -214,7 +215,7 @@ uint8_t test_extern_state(uint8_t option) {
 
   BOARD_state = eeprom_read_byte((uint8_t*)BOARD_EEPROM_ADDRESS);
   print("Self %d, Board %d\n", SELF_state, BOARD_state);
-  if (BOARD_state == SELF_state){//properly externed
+  if (BOARD_state == SELF_state) {//properly externed
     return 1;//pass
   }
   return 0;//fail
@@ -227,7 +228,7 @@ void test_extern() {
   resume_mob(&tx_mob);
   while (!is_paused(&tx_mob)) {}//Flag should change after this line
   print("Tx mob sent for flag waiting for response\n");
-  while(CAN_MSG_RCV == 0){_delay_ms(10);}//wait for can message to be recieved
+  while(CAN_MSG_RCV == 0) {_delay_ms(10);}//wait for can message to be recieved
   print("CAN_MSG_RCV flag expected: 1, Actual: %d\n\n", CAN_MSG_RCV);
 
   //Test states using test_extern_state code
@@ -248,7 +249,7 @@ uint8_t main() {
   //to itself by first going through switch statements, then find the appropriate
   //funtion calls to that specific state and execute it.
   uint8_t fresh_restart;//fresh reset = 0 if not
-  if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF){
+  if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF) {
     init_eeprom();
     fresh_restart = 1;//fresh restart
     print("fresh \n");
@@ -276,7 +277,7 @@ uint8_t main() {
   test_10_beats();
 /*
   //testing functions
-  while(CAN_MSG_RCV == 0 && fresh_restart == 1){
+  while(CAN_MSG_RCV == 0 && fresh_restart == 1) {
     print("Entered loop/Fresh restart\n");
     //wait for message from OBC, which can change can_msg_rcv
     //Only enter this with fresh start
@@ -291,7 +292,7 @@ uint8_t main() {
     print("Current flag state: %d\n", CAN_MSG_RCV);
   }
 
-  switch(OBC_state){
+  switch(OBC_state) {
     case 0:
       print("OBC is in state 0, PAY is %d\n", PAY_state);
       break;
@@ -309,7 +310,7 @@ uint8_t main() {
 SELF_state = OBC_state;
 SELF_EEPROM_ADDRESS = OBC_EEPROM_ADDRESS;
 
-  while (1){
+  while (1) {
     SELF_state += 1;
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}

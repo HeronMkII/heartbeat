@@ -25,7 +25,7 @@ Contains all heartbeat.c functions
 #define DEADBEEF 0xdeadbeef
 
 extern uint8_t SELF_state;
-extern uint8_t SELF_EEPROM_ADDRESS;
+extern uint16_t SELF_EEPROM_ADDRESS;
 extern uint8_t OBC_state;//2
 extern uint8_t EPS_state;//3
 extern uint8_t PAY_state;//4

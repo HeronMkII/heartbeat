@@ -30,7 +30,7 @@ This iteration of heartbeat design has the following assumptions:
 #include <util/atomic.h>
 
 extern uint8_t SELF_state;
-extern uint8_t SELF_EEPROM_ADDRESS;
+extern uint16_t SELF_EEPROM_ADDRESS;
 extern uint8_t OBC_state;//2
 extern uint8_t EPS_state;//3
 extern uint8_t PAY_state;//4
@@ -51,7 +51,6 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
   //and EPS, in this order.
   *len = 5;
   //Simulate a state change by incrementing the state of OBC
-  //OBC_state += 1;
   //Upon state change, OBC first updates the state data in its own EEPROM
   //Should only need to update the state data for OBC
   eeprom_update_byte((uint8_t*)SELF_EEPROM_ADDRESS, SELF_state);
@@ -64,21 +63,21 @@ void tx_callback(uint8_t* state_data, uint8_t* len) {
   //Verify that all state data elements are in valid range
   //OBC range check (Assume state range is 0-10)
   state_data[1] = 2;
-  if (in_range_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS), 0, 10)==1){
+  if (in_range_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS), 0, 10)==1) {
       state_data[2] = eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS);
   }
   else {
     print ("OBC has invalid state\n");//Address by getting state data from other SSMs
   }
   //ESP range check (Assume state range is 0-10)
-  if (in_range_check(eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS), 0, 10)==1){
+  if (in_range_check(eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS), 0, 10)==1) {
       state_data[3] = eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS);
   }
   else {
     print ("EPS has invalid state\n");//Address by getting state data from other SSMs
   }
   //PAY range check (Assume state range is 0-10)
-  if (in_range_check(eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS), 0, 10)==1){
+  if (in_range_check(eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS), 0, 10)==1) {
       state_data[4] = eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS);
   }
   else {
@@ -91,26 +90,26 @@ void rx_callback(uint8_t* state_data, uint8_t len) {
   //Verifies that len is equal to 5
   len_check(len);//Should be handled by asking for re-send and subsequent reboot if unsuccesfully re-sent
 
-  if (state_data[1] == 2){//if in heartbeat
+  if (state_data[1] == 2) {//if in heartbeat
   //Update the state data for all 3 SSMs in EEPROM
     CAN_MSG_RCV = 1;
     //Assuming that self is OBC, parent is EPS and child is PAY
     //Verify that increments are correct
-    if (same_val_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS), state_data[2])==1){
+    if (same_val_check(eeprom_read_byte((uint8_t*)OBC_EEPROM_ADDRESS), state_data[2])==1) {
       eeprom_update_byte((uint8_t*)OBC_EEPROM_ADDRESS,state_data[2]);
     }
     else{
       print("Unexpected state update (self)\n");//Do not update (Potential SSM reset?)
     }
 
-    if (increment_check(eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS),state_data[3])==1){
+    if (increment_check(eeprom_read_byte((uint8_t*)EPS_EEPROM_ADDRESS),state_data[3])==1) {
       eeprom_update_byte((uint8_t*)EPS_EEPROM_ADDRESS,state_data[3]);
     }
     else{
       print("Unexpected state update (parent)\n");
     }
 
-    if (increment_check(eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS),state_data[4])==1 || same_val_check(eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS),state_data[4])==1){
+    if (increment_check(eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS),state_data[4])==1 || same_val_check(eeprom_read_byte((uint8_t*)PAY_EEPROM_ADDRESS),state_data[4])==1) {
       eeprom_update_byte((uint8_t*)PAY_EEPROM_ADDRESS,state_data[4]);
     }
     else{
@@ -128,7 +127,7 @@ void rx_callback(uint8_t* state_data, uint8_t len) {
 
 uint8_t is_empty_check(uint8_t* state) {
   //state must not be empty
-  if (state == NULL){
+  if (state == NULL) {
     print("Error: NULL state\n");
     return 0;
   }
@@ -138,7 +137,7 @@ uint8_t is_empty_check(uint8_t* state) {
 
 uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max) {
   //Verify that state is within valid range
-  if (state < min || state > max){
+  if (state < min || state > max) {
     print("Error: Invalid range\n");
     return 0;
   }
@@ -147,7 +146,7 @@ uint8_t in_range_check(uint8_t state, uint8_t min, uint8_t max) {
 }
 
 uint8_t same_val_check(uint8_t old_val, uint8_t new_val) {
-  if (new_val == old_val){
+  if (new_val == old_val) {
     print("Passed same_val_check\n");
     return 1;
   }
@@ -157,7 +156,7 @@ uint8_t same_val_check(uint8_t old_val, uint8_t new_val) {
 
 uint8_t increment_check(uint8_t old_val, uint8_t new_val) {
   //Assume that only valid increment is ++ or same
-  if (new_val == old_val +1){
+  if (new_val == old_val +1) {
     print("Passed increment_check\n");
     return 1;
   }
@@ -167,7 +166,7 @@ uint8_t increment_check(uint8_t old_val, uint8_t new_val) {
 
 uint8_t len_check(uint8_t len) {
   //len must be equal to 5
-  if (len == 5){
+  if (len == 5) {
     print("Passed len_check\n");
     return 1;
   }
