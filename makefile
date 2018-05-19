@@ -10,7 +10,8 @@ LIB = -L./lib-common/lib -luart -lspi -lcan -ltimer -lqueue
 
 # Change this line based on your OS and port
 #PORT = /dev/tty.usbmodem00187462
-PORT = COM4
+PORT = /dev/tty.usbmodem00208212
+#PORT = COM4
 
 SRC = $(wildcard ./src/*.c)
 OBJ = $(SRC:./src/%.c=./build/%.o)
