@@ -31,10 +31,11 @@ TODO
 #define F_CPU 8
 #include <util/delay.h>
 //#include <heartbeat/heartbeat.h>
+#include "system_testing.h"
 #include "heartbeat.h"
 
 uint8_t SELF_state = 0;//0 at fresh restart
-uint16_t SELF_EEPROM_ADDRESS = 0x0000;//OBC
+uint16_t SELF_EEPROM_ADDRESS = OBC_EEPROM_ADDRESS;//OBC
 uint8_t OBC_state = 0;//0 at fresh restart
 uint8_t EPS_state = 0;//0
 uint8_t PAY_state = 0;//0
@@ -65,6 +66,7 @@ mob_t tx_mob = {
 //Does not test CAN_MSG_RCV for one board
 //by removing same_val_check error function
 //can also change other boards state then sends that data
+/*
 void test_single_heartbeat() {
   uint8_t leave = 0;//when to stop sending messages
   while (leave == 0) {
@@ -96,7 +98,7 @@ void test_10_beats() {
     print("Current EPS state is %d, PAY is %d", SELF_state, PAY_state);
   }
 }
-
+*/
 //testing
 //Both boards can have this function
 //Changes its own state then sends that changed state to the other board
@@ -123,29 +125,29 @@ void test_heartbeat(uint8_t fresh_restart) {
     print("Current flag state: %d\n", CAN_MSG_RCV);
   }
 
-  switch(OBC_state) {
+  switch(SELF_state) {
     case 0:
-      print("OBC is in state 0, PAY is %d\n", PAY_state);
+      print("SELF is in state 0, PAY is %d\n", PAY_state);
       break;
     case 1:
-      print("OBC is in state 1, PAY is %d\n", PAY_state);
+      print("SELF is in state 1, PAY is %d\n", PAY_state);
       break;
     case 2:
-      print("OBC is in state 2, PAY is %d\n", PAY_state);
+      print("SELF is in state 2, PAY is %d\n", PAY_state);
       break;
     default:
-      print("OBC is in ERROR state\n");
+      print("SELF is in ERROR state\n");
       break;
       //set can_msg_rcv to 0?
   }
 
-  while (1) {
-    OBC_state += 1;
+//  while (1) {
+    SELF_state += 1;
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
     print("Tx mob sent\n\n");
     _delay_ms(1000);
-  }
+  //}
 }
 
 //receives heartbeat at the beginning
@@ -159,31 +161,27 @@ void test_heartbeat2(uint8_t fresh_restart) {
     print("Current flag state: %d\n", CAN_MSG_RCV);
   }
 
-  switch(OBC_state) {
+  switch(SELF_state) {
     case 0:
-      print("OBC is in state 0, PAY is %d\n", PAY_state);
+      print("SELF is in state 0, PAY is %d\n", PAY_state);
       break;
     case 1:
-      print("OBC is in state 1, PAY is %d\n", PAY_state);
+      print("SELF is in state 1, PAY is %d\n", PAY_state);
       break;
     case 2:
-      print("OBC is in state 2, PAY is %d\n", PAY_state);
+      print("SELF is in state 2, PAY is %d\n", PAY_state);
       break;
     default:
-      print("OBC is in ERROR state\n");
+      print("SELF is in ERROR state\n");
       break;
       //set can_msg_rcv to 0?
   }
-
-  SELF_state = PAY_state;
-  SELF_EEPROM_ADDRESS = PAY_EEPROM_ADDRESS;
-  while (1) {
+//  while (1) {
     SELF_state += 1;
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
     print("Tx mob sent\n\n");
-    _delay_ms(1000);
-  }
+//  }
 }
 
 //Checks to make sure extern works for SELF_state and SELF_ADDRESS
@@ -248,6 +246,7 @@ uint8_t main() {
   //Boot Sequence: Retrieve latest state from its own EEPROM. Then assign the state
   //to itself by first going through switch statements, then find the appropriate
   //funtion calls to that specific state and execute it.
+  eeprom_update_dword((uint32_t*)INIT_WORD,0xdeadbeee);
   uint8_t fresh_restart;//fresh reset = 0 if not
   if (eeprom_read_dword((uint32_t*)INIT_WORD) != DEADBEEF) {
     init_eeprom();
@@ -261,63 +260,23 @@ uint8_t main() {
     fresh_restart = 0;
   }
 
-  print("initialized first val to: %x\n",eeprom_read_dword((uint32_t*)INIT_WORD));
-  print("First boot sequence Expected: 0. Other boot sequence expected __\n");
-  print("OBC Actual: %d\n", OBC_state);
-  print("PAY Actual: %d\n", PAY_state);
-  print("EPS Actual: %d\n\n", EPS_state);
+//  print("initialized first val to: %x\n",eeprom_read_dword((uint32_t*)INIT_WORD));
+//  print("First boot sequence Expected: 0. Other boot sequence expected __\n");
+//  print("OBC Actual: %d\n", OBC_state);
+//  print("PAY Actual: %d\n", PAY_state);
+//  print("EPS Actual: %d\n\n", EPS_state);
 
-  //eeprom_update_dword((uint32_t*)INIT_WORD,0xddddffff);
   //Needs to be initialized to recieve requests
   init_tx_mob(&tx_mob);
   init_rx_mob(&rx_mob);
-  //eeprom_update_dword((uint32_t*)INIT_WORD,0xdededede);
-  //test_extern();
+
+//  test_extern();
+
+//  test_extern();
   //test_heartbeat2(fresh_restart);
-  test_10_beats();
-/*
-  //testing functions
-  while(CAN_MSG_RCV == 0 && fresh_restart == 1) {
-    print("Entered loop/Fresh restart\n");
-    //wait for message from OBC, which can change can_msg_rcv
-    //Only enter this with fresh start
-    //flag is set to 1 in rx_callback
+  test_heartbeat(fresh_restart);
+  //test_10_beats();
 
-    //send changed state
-    resume_mob(&tx_mob);
-    while (!is_paused(&tx_mob)) {}
-    print("Tx mob sent\n\n");
-
-    //expected to leave loop because of own state change
-    print("Current flag state: %d\n", CAN_MSG_RCV);
-  }
-
-  switch(OBC_state) {
-    case 0:
-      print("OBC is in state 0, PAY is %d\n", PAY_state);
-      break;
-    case 1:
-      print("OBC is in state 1, PAY is %d\n", PAY_state);
-      break;
-    case 2:
-      print("OBC is in state 2, PAY is %d\n", PAY_state);
-      break;
-    default:
-      print("OBC is in ERROR state\n");
-      break;
-      //set can_msg_rcv to 0?
-  }
-SELF_state = OBC_state;
-SELF_EEPROM_ADDRESS = OBC_EEPROM_ADDRESS;
-
-  while (1) {
-    SELF_state += 1;
-    resume_mob(&tx_mob);
-    while (!is_paused(&tx_mob)) {}
-    print("Tx mob sent\n\n");
-    _delay_ms(1000);
-  }
-*/
   while(1) {}//do nothing at end
 
   return 0;
