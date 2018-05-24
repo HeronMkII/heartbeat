@@ -78,40 +78,47 @@ void test_valid_range() {
     while (!is_paused(&tx_mob)) {}
     print("Current state is %d\n", SELF_state);
     in_range_check(SELF_state,0,2);
-  }
-  }
-
-void test_increment() {
-  SELF_state = -5;
-  print("\n\nThese increments should be valid\n");
-  for (uint8_t i =0;i<5;i++) {
-    print("Increment by one:\n");
-    SELF_state += 1;
-    increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
-    resume_mob(&tx_mob);
-    while (!is_paused(&tx_mob)) {}
-  }
-  SELF_state = -5;
-  print("\n\nThese increments should not be valid\n");
-  for (uint8_t i =0;i<5;i++) {
-    print("Increment by negative one:\n");
-    SELF_state += -1;
-    increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
-    resume_mob(&tx_mob);
-    while (!is_paused(&tx_mob)) {}
-  }
-  print("\n\nThese increments should not be valid\n");
-  for (uint8_t i =0;i<5;i++) {
-    print("Increment by zero:\n");
-    SELF_state += 0;
-    increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
-    resume_mob(&tx_mob);
-    while (!is_paused(&tx_mob)) {}
+    print("\n");
   }
 }
 
+void test_increment() {
+  SELF_state = 0;
+  print("\n\nThese increments should be valid\n");
+  for (uint8_t i =0;i<5;i++) {
+    print("Increment by one:\n");
+    SELF_state += 1;
+    increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
+    resume_mob(&tx_mob);
+    while (!is_paused(&tx_mob)) {}
+    print("\n");
+  }
+  SELF_state = 0;
+  print("\n\nThese increments should not be valid\n");
+  for (uint8_t i =0;i<5;i++) {
+    print("Increment by negative one:\n");
+    SELF_state += -1;
+    increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
+    resume_mob(&tx_mob);
+    while (!is_paused(&tx_mob)) {}
+    print("\n");
+  }
+  SELF_state = 0;
+  print("\n\nThese increments should not be valid\n");
+  for (uint8_t i =0;i<5;i++) {
+    print("Increment by zero:\n");
+    SELF_state += 0;
+    increment_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
+    resume_mob(&tx_mob);
+    while (!is_paused(&tx_mob)) {}
+    print("\n");
+  }
+  print("\n");
+}
+
 void test_same_val() {
-  SELF_state = -5;
+  //Checks to make sure SELF_state global is the same value as in EEPROM
+  SELF_state = 0;
   print("\n\nThese increments should not be valid\n");
   for (uint8_t i =0;i<5;i++) {
     print("Increment by one:\n");
@@ -119,8 +126,9 @@ void test_same_val() {
     same_val_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
+    print("\n");
   }
-  SELF_state = -5;
+  SELF_state = 0;
   print("\n\nThese increments should not be valid\n");
   for (uint8_t i =0;i<5;i++) {
     print("Increment by negative one:\n");
@@ -128,15 +136,20 @@ void test_same_val() {
     same_val_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
+    print("\n");
   }
+  SELF_state = 0;
   print("\n\nThese increments should be valid\n");
+  print("%d Self_state \n", SELF_state);
   for (uint8_t i =0;i<5;i++) {
     print("Increment by zero:\n");
     SELF_state += 0;
     same_val_check(eeprom_read_byte((uint8_t*)SELF_EEPROM_ADDRESS),SELF_state);
     resume_mob(&tx_mob);
     while (!is_paused(&tx_mob)) {}
+    print("\n");
   }
+  print("\n");
 }
 /*
 uint8_t increment_check(uint8_t old_val, uint8_t new_val) {
@@ -209,6 +222,7 @@ uint8_t main() {
     fresh_restart = 0;
   }
 
+eeprom_update_dword((uint32_t*)INIT_WORD,0xdeadeeee);
   //testing state retrieval
   //checking if deadbeef was entered
   print("initialized first val: %x Expected: beef\n",eeprom_read_dword((uint32_t*)INIT_WORD));
@@ -221,8 +235,6 @@ uint8_t main() {
   //Needs to be initialized to recieve requests
   init_tx_mob(&tx_mob);
   init_rx_mob(&rx_mob);
-  //eeprom_update_dword((uint32_t*)INIT_WORD,0xdededede);
-
 
   while(1) {
     resume_mob(&tx_mob);
@@ -235,5 +247,8 @@ uint8_t main() {
   test_same_val();
   test_increment();
 
+  while(1);
+
   return 0;
-}*/
+}
+*/
