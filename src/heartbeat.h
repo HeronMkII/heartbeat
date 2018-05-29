@@ -41,6 +41,7 @@ extern uint8_t* child_status;
 
 extern uint8_t ssm_id; //will be changed by each SSM
 //obc {0x00} eps {10} pay {01}
+extern uint8_t receiving_id;
 
 extern uint8_t fresh_start;
 

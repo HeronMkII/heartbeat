@@ -3,6 +3,7 @@
 void init_heartbeat();
 void assign_heartbeat_status();
 void assign_status_message_objects();
+void heartbeat();
 
 void rx_callback(uint8_t*, uint8_t);
 void tx_callback(uint8_t*, uint8_t*);
@@ -18,6 +19,7 @@ uint8_t* child_status = 0x00;
 
 uint8_t ssm_id = 0b11; //will be changed by each SSM
 //obc {0b00} eps {0b10} pay {0b01}
+uint8_t receiving_id = 0b11;
 
 uint8_t fresh_start = 1; //1 is true. 0 is false
 
@@ -49,16 +51,19 @@ void assign_heartbeat_status() {
             self_status = &obc_status;
             parent_status = &eps_status;
             child_status = &pay_status;
+            receiving_id = 0b10;
             break;
         case 0b10:
             self_status = &eps_status;
             parent_status = &pay_status;
             child_status = &obc_status;
+            receiving_id = 0b01;
             break;
         case 0b01:
             self_status = &pay_status;
             parent_status = &obc_status;
             child_status = &eps_status;
+            receiving_id = 0b00;
             break;
         default:
             print("INVALID SSM ID");
@@ -96,6 +101,11 @@ void init_heartbeat() {
     //assign_heartbeat_status();
     assign_heartbeat_status();
     assign_status_message_objects();
+
+    //mobs initializations
+    init_rx_mob(&status_rx_mob);
+    init_tx_mob(&status_tx_mob);
+
     if (eeprom_read_dword((uint32_t*) INIT_WORD_EEMEM) != DEADBEEF){
         print("SSM FRESH START\n");
         eeprom_update_dword((uint32_t*) INIT_WORD_EEMEM, DEADBEEF);
@@ -130,34 +140,51 @@ void init_heartbeat() {
 /*Status CAN Message*/
 /*Assume 8 bytes: (0)sending SSM (1) receiving SSM (2) message type (2 for
 heartbeat) (3) obc status (4) eps status (5) pay status (6) time stamp */
+//follow CAN message format in OBC commnd queue and PAY
 void tx_callback(uint8_t* data, uint8_t* len) {
+    //first update its own EEPROM status before sending a CAN message to parent
+    //status changed can only be self-initiated
+    eeprom_update_byte((uint8_t*) OBC_STATUS_EEMEM, *self_status);
+    //set up CAN message variables to be sent to parents
     *len = 8;
     data[0] = ssm_id;
-    //data[1] = 
-    data[1] = 2; //message type: 2 for heartbeat
-    data[2] = 0; //field number (follow CAN message format in OBC commnd queue)
-    //data[3] = not finished
-    //data[4] = not finished
-    //data[5] = not finished
-    print("Status updated and sent to parent.\n");
+    data[1] = receiving_id;
+    data[2] = 2; //field number
+    data[3] = obc_status;
+    data[4] = eps_status;
+    data[5] = pay_status;
+    print("Status updated and sent to parent\n");
 }
 
 void rx_callback(uint8_t* data, uint8_t len) {
     print("Received status from child\n");
     if (len != 0) {
-        //child_counter = data[0];
+        //update the status global variables
+        obc_status = data[3];
+        eps_status = data[4];
+        pay_status = data[5];
         //save updated data into EEPROM
-        print("child_counter: \n");
+        eeprom_update_byte((uint8_t*) OBC_STATUS_EEMEM, data[3]);
+        eeprom_update_byte((uint8_t*) EPS_STATUS_EEMEM, data[4]);
+        eeprom_update_byte((uint8_t*) PAY_STATUS_EEMEM, data[5]);
+        print("Updated status in EEPROM\n");
     } else {
-        print("No data\n");
+        print("Status receiving error! No data!\n");
     }
+}
+
+void heartbeat() {
+        resume_mob(&status_tx_mob);
+        //delay for readability debugging purposes
 }
 
 //This main function simulates the example file in lib-common
 int main() {
     ssm_id = 0b00; //obc
     init_heartbeat();
-    //uint8_t test = *self_status;
-    return 0;
 
+    //status change in SSM in timed manner corresponds to mission
+    *self_status += 1;
+    heartbeat();
+    return 0;
 }
