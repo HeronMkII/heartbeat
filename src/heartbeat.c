@@ -20,6 +20,7 @@ uint8_t ssm_id = 0b11; //will be changed by each SSM
 
 uint8_t fresh_start = 1; //1 is true. 0 is false
 
+//Functions implementations
 void assign_heartbeat_status() {
     switch(ssm_id){
         case 0b00:
@@ -63,10 +64,12 @@ void init_heartbeat() {
                 *self_status = eeprom_read_byte((uint8_t*) EPS_STATUS_EEMEM);
                 *parent_status = eeprom_read_byte((uint8_t*) PAY_STATUS_EEMEM);
                 *child_status = eeprom_read_byte((uint8_t*) OBC_STATUS_EEMEM);
+                break;
             case 0b01:
                 *self_status = eeprom_read_byte((uint8_t*) PAY_STATUS_EEMEM);
                 *parent_status = eeprom_read_byte((uint8_t*) OBC_STATUS_EEMEM);
                 *child_status = eeprom_read_byte((uint8_t*) EPS_STATUS_EEMEM);
+                break;
             default:
                 print("INVALID SSM ID. STATUS NOT RETRIEVED\n");
                 break;
