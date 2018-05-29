@@ -3,8 +3,8 @@
 
 //Assume init_uart() and init_can() have been called
 #include <avr/eeprom.h>
-#include <stdbool.h>
 
+//Includes in the user files
 #include <uart/uart.h>
 #include <can/can.h>
 #include <uart/log.h>
@@ -22,10 +22,10 @@
 
 //EEPROM address assignment to store status of each SSM
 //Address starts from 0x0000
-#define INIT_WORD_EEMEM 0x0000
-#define OBC_STATUS_EEMEM 0X0004
-#define EPS_STATUS_EEMEM 0X0008
-#define PAY_STATUS_EEMEM 0X000c
+const uint16_t INIT_WORD_EEMEM  = 0x0000; //4 bytes
+const uint16_t OBC_STATUS_EEMEM = 0X0004; //1 byte
+const uint16_t EPS_STATUS_EEMEM = 0X0005; //1 byte
+const uint16_t PAY_STATUS_EEMEM = 0X0006; //1 byte
 
 #define DEADBEEF 0Xdeadbeef //4 bytes
 
@@ -40,6 +40,6 @@ extern uint8_t* child_status;
 extern uint8_t ssm_id; //will be changed by each SSM
 //obc {0x00} eps {10} pay {01}
 
-extern bool fresh_start;
+uint8_t fresh_start;
 
 #endif

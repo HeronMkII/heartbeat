@@ -6,6 +6,7 @@ void assign_heartbeat_status();
 void rx_callback(uint8_t*, uint8_t);
 void tx_callback(uint8_t*, uint8_t*);
 
+//Pre-initializations
 uint8_t obc_status = 0x00; //global variables to store SSM status
 uint8_t eps_status = 0x00;
 uint8_t pay_status = 0x00;
@@ -17,7 +18,7 @@ uint8_t* child_status = 0x00;
 uint8_t ssm_id = 0b11; //will be changed by each SSM
 //obc {0b00} eps {0b10} pay {0b01}
 
-bool fresh_start = true;
+uint8_t fresh_start = 1; //1 is true. 0 is false
 
 void assign_heartbeat_status() {
     switch(ssm_id){
@@ -46,7 +47,7 @@ void init_heartbeat() {
     if (eeprom_read_dword((uint32_t*) INIT_WORD_EEMEM) != DEADBEEF){
         print("SSM FRESH START\n");
         eeprom_update_dword((uint32_t*) INIT_WORD_EEMEM, DEADBEEF);
-        bool fresh_start = false;
+        fresh_start = 0;
     }
     else {
         print("SSM RESTART -> RETRIEVE STATUS\n");
@@ -68,7 +69,7 @@ void init_heartbeat() {
                 print("INVALID SSM ID. STATUS NOT RETRIEVED\n");
                 break;
         }
-        bool fresh_start = false;
+        //fresh_start = 0;
     }
 }
 
