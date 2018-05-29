@@ -31,10 +31,12 @@ void assign_heartbeat_status() {
             self_status = &eps_status;
             parent_status = &pay_status;
             child_status = &obc_status;
+            break;
         case 0b01:
             self_status = &pay_status;
             parent_status = &obc_status;
             child_status = &eps_status;
+            break;
         default:
             print("INVALID SSM ID");
             break;

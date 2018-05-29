@@ -22,6 +22,8 @@
 
 //EEPROM address assignment to store status of each SSM
 //Address starts from 0x0000
+//Use const uint16_t to decalre the address value and type casted when using
+//eeprom functions.
 const uint16_t INIT_WORD_EEMEM  = 0x0000; //4 bytes
 const uint16_t OBC_STATUS_EEMEM = 0X0004; //1 byte
 const uint16_t EPS_STATUS_EEMEM = 0X0005; //1 byte
