@@ -75,21 +75,21 @@ void assign_status_message_objects() {
     switch(ssm_id){
         case 0b00:
             status_rx_mob.mob_num = 1;
-            //status_rx_mob.id_tag = {OBC_STATUS_RX_MOB_ID}; //gives error :(
+            status_rx_mob.id_tag.std = OBC_STATUS_RX_MOB_ID; //gives error :(
             status_tx_mob.mob_num = 0;
-            //status_tx_mob.id_tag = {OBC_STATUS_TX_MOB_ID};
+            status_tx_mob.id_tag.std = OBC_STATUS_TX_MOB_ID;
             break;
         case 0b10:
             status_rx_mob.mob_num = 0;
-            //status_rx_mob.id_tag = EPS_STATUS_RX_MOB_ID;
+            status_rx_mob.id_tag.std = EPS_STATUS_RX_MOB_ID;
             status_tx_mob.mob_num = 1;
-            //status_tx_mob.id_tag = EPS_STATUS_TX_MOB_ID;
+            status_tx_mob.id_tag.std = EPS_STATUS_TX_MOB_ID;
             break;
         case 0b01:
             status_rx_mob.mob_num = 0;
-            //status_rx_mob.id_tag = PAY_STATUS_RX_MOB_ID;
+            status_rx_mob.id_tag.std = PAY_STATUS_RX_MOB_ID;
             status_tx_mob.mob_num = 1;
-            //status_tx_mob.id_tag = PAY_STATUS_TX_MOB_ID;
+            status_tx_mob.id_tag.std = PAY_STATUS_TX_MOB_ID;
             break;
         default:
             print("INVALID SSM ID");
@@ -178,13 +178,14 @@ void heartbeat() {
         //delay for readability debugging purposes
 }
 
+
 //This main function simulates the example file in lib-common
 int main() {
     ssm_id = 0b00; //obc
     init_heartbeat();
 
     //status change in SSM in timed manner corresponds to mission
-    *self_status += 1;
+    obc_status += 1; //or in general: *self_status += 1;
     heartbeat();
     return 0;
 }

@@ -35,6 +35,7 @@ extern uint8_t obc_status; //global variables to store SSM status
 extern uint8_t eps_status;
 extern uint8_t pay_status;
 
+//purpose of having indirect access to status is for using error checking
 extern uint8_t* self_status;
 extern uint8_t* parent_status;
 extern uint8_t* child_status;
